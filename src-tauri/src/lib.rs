@@ -9,6 +9,7 @@
 
 mod commands;
 mod platform;
+mod reveal;
 mod shelf;
 mod thumbnails;
 mod watcher;
@@ -16,9 +17,14 @@ mod windows_mgr;
 
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 
+use commands::LINE_HIDE_EVENT;
+use commands::LINE_SHOW_EVENT;
+use reveal::{Action, RevealControl, RevealMachine, Tick};
 use shelf::{HangOutcome, Shelf, ShelfEntry};
 use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_global_shortcut::{Builder as ShortcutBuilder, GlobalShortcutExt, ShortcutState};
 use watcher::{OnScreenshot, WatchControl, WatcherConfig};
 
 const WATCH_DIR_ENV: &str = "PINZA_WATCH_DIR";
@@ -41,7 +47,9 @@ fn resolve_data_dir(app: &AppHandle) -> Result<PathBuf, String> {
 pub fn run() {
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::new().build())
+        .plugin(ShortcutBuilder::new().build())
         .manage(Mutex::new(Shelf::default()))
+        .manage(RevealControl::default())
         .manage(WatchControl::default())
         .invoke_handler(tauri::generate_handler![
             commands::app_info::app_info,
@@ -58,8 +66,16 @@ pub fn run() {
                 // cuando el puntero pasa sobre una miniatura.
                 let _ = line.set_ignore_cursor_events(true);
             }
+            app.global_shortcut()
+                .on_shortcut("ctrl+alt+t", |app, _shortcut, event| {
+                    if event.state() == ShortcutState::Pressed {
+                        app.state::<RevealControl>().request_toggle();
+                    }
+                })
+                .map_err(|error| format!("no se pudo registrar el atajo global: {error}"))?;
             serve_thumbnails_scope(app.handle());
             setup_watcher(app.handle());
+            spawn_reveal_loop(app.handle().clone());
             Ok(())
         })
         .run(tauri::generate_context!());
@@ -67,6 +83,47 @@ pub fn run() {
     if let Err(error) = result {
         log::error!("el shell de Pinza no pudo arrancar: {error}");
         std::process::exit(1);
+    }
+}
+
+const REVEAL_POLL: Duration = Duration::from_millis(50);
+
+/// Sondea el cursor y la pantalla completa y decide si la línea se muestra
+/// u oculta. La franja siempre existe como ventana transparente: mostrar y
+/// ocultar son solo eventos hacia la web, que anima la cuerda.
+fn spawn_reveal_loop(app: AppHandle) {
+    std::thread::spawn(move || {
+        let mut machine = RevealMachine::new();
+        loop {
+            std::thread::sleep(REVEAL_POLL);
+            let now = Instant::now();
+            let cursor = platform::windows::cursor_position().ok();
+            let cursor_y = cursor.as_ref().map(|point| point.y);
+            let tick = Tick {
+                cursor_in_edge_zone: cursor_y.is_some_and(|y| y <= reveal::EDGE_ZONE_PX),
+                cursor_in_strip: cursor_y.is_some_and(|y| y <= windows_mgr::LINE_HEIGHT as i32),
+                fullscreen: platform::windows::fullscreen_app_active(),
+                now,
+            };
+
+            let action = if app.state::<RevealControl>().take_toggle() {
+                machine.toggle(tick.fullscreen)
+            } else {
+                machine.tick(tick)
+            };
+
+            match action {
+                Action::Show => emit_line_event(&app, LINE_SHOW_EVENT, "desplegar"),
+                Action::Hide => emit_line_event(&app, LINE_HIDE_EVENT, "ocultar"),
+                Action::Nothing => {}
+            }
+        }
+    });
+}
+
+fn emit_line_event(app: &AppHandle, event: &str, intent: &str) {
+    if let Err(error) = app.emit(event, ()) {
+        log::error!("no se pudo avisar de {intent} la línea: {error}");
     }
 }
 

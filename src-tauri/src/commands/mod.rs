@@ -9,3 +9,5 @@ pub mod watching;
 /// Eventos que el shell emite hacia la web cuando la línea cambia.
 pub const SCREENSHOT_ADDED_EVENT: &str = "screenshot:added";
 pub const SCREENSHOT_REMOVED_EVENT: &str = "screenshot:removed";
+pub const LINE_SHOW_EVENT: &str = "line:show";
+pub const LINE_HIDE_EVENT: &str = "line:hide";
