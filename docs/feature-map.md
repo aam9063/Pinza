@@ -52,17 +52,17 @@
 - Trampas conocidas: el arrastre nativo no se puede verificar solo por CDP, hace falta `pnpm verify:native`; clic, doble clic y mantener pulsado no deben dispararse entre sí.
 - Diseño: `docs/design/02-gestos.png`.
 
-## Editor de anotaciones (M3a real: lápiz, selección, historial y estilo; resto de herramientas y salida en M3b/M3c)
+## Editor de anotaciones (M3a-M3b reales: todas las herramientas vectoriales y edición; salida en M3c)
 
 - Qué es (punto de vista del usuario): dibujar sobre una captura y guardar una copia anotada.
-- Sub-features: seleccionar y mover, lápiz, resaltador, flecha, línea, rectángulo, elipse, texto, numeración de pasos, pixelar o difuminar, recortar, editar objetos después de dibujarlos, deshacer y rehacer, zoom y desplazamiento, copiar, guardar y cerrar.
+- Sub-features reales: abrir la captura concreta a tamaño ajustado, lápiz y resaltador con perfect-freehand, flecha, línea, rectángulo, elipse, texto en línea, pasos numerados autoincrementados, seleccionar/mover/redimensionar con horneado de geometría, cambiar color y grosor del seleccionado, duplicar con Ctrl+D, deshacer y rehacer ilimitados, borrar con Supr, 4 colores rápidos + selector y 3 grosores + deslizador. (Previstas en M3c: pixelar/difuminar, recortar, zoom y desplazamiento, copiar, guardar y cerrar.)
 - Cómo se llega: mantener una miniatura 0,4 s o pulsar el lápiz de su barra de acciones.
-- Atajos: V, P, H, A, L, R, E, T, N, B, C para las herramientas; Ctrl+Z y Ctrl+Y; Ctrl+C; Ctrl+S; Ctrl + rueda; Ctrl+0; Supr; Ctrl+D.
-- Selectores para control programático: `editor-tool-<name>`, `editor-color-<n>`, `editor-stroke`, `editor-undo`, `editor-copy`, `editor-save`, `editor-canvas` (previstos).
-- Ubicación del código: `src/features/annotate/`, `src/app/editor/page.tsx`, `src-tauri/src/commands/` (`save_annotated`).
-- Backend/API: comando `save_annotated` (previsto), emite `screenshot:added` para la copia.
-- Trampas conocidas: exportar a la resolución original, no a la de pantalla; el fichero original debe conservar el mismo hash.
-- Diseño: `docs/design/03-anotar.png`.
+- Atajos: V, P, H, A, L, R, E, T, N (reales); B y C llegan en M3c. Ctrl+Z, Ctrl+Y y Ctrl+Mayús+Z; Supr; Ctrl+D.
+- Selectores para control programático: `annotate-canvas`, `editor-toolbar`, `editor-tool-<name>` (select, pencil, highlighter, arrow, line, rectangle, ellipse, text, step), `editor-undo`, `editor-redo`, `editor-color-<hex>`, `editor-color-picker`, `editor-width-<n>`, `editor-width-slider`, `editor-text-input`, `editor-empty`.
+- Ubicación del código: `src/features/annotate/` (store, lienzo, carga de captura), `src/app/editor/page.tsx`, `src-tauri/src/commands/open_window.rs` (objetivo y scope por fichero), `src-tauri/src/commands/file_ops.rs` (`save_annotated` previsto).
+- Backend/API: `open_window` con `capturePath`, `get_editor_capture`; el scope de assets se amplía solo al fichero abierto; `save_annotated` previsto (M3c).
+- Trampas conocidas: exportar a la resolución original, no a la de pantalla; el fichero original debe conservar el mismo hash; los nodos de Konva viven en canvas (verificar por la API de Konva, no por DOM); el borrador del trazo y el estilo deben ir en refs (eventos en el mismo tick leen closures obsoletos); el paso numerado necesita x/y explícitos en el Group.
+- Diseño: `docs/design/03-anotar.png`; evidencia: `docs/design/evidence/m3a-editor.png` y `m3b-editor.png`.
 
 ## Ajustes y bandeja (prevista, M4)
 
