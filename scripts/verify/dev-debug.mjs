@@ -7,8 +7,8 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const dataDir = mkdtempSync(join(tmpdir(), "pinza-data-"));
-const watchDir = mkdtempSync(join(tmpdir(), "pinza-watch-"));
+const dataDir = process.env.PINZA_DATA_DIR ?? mkdtempSync(join(tmpdir(), "pinza-data-"));
+const watchDir = process.env.PINZA_WATCH_DIR ?? mkdtempSync(join(tmpdir(), "pinza-watch-"));
 
 const env = {
   ...process.env,
