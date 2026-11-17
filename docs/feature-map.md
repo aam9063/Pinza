@@ -2,6 +2,19 @@
 
 > Seeded before any code exists. Every entry marked **(planned)** must be replaced with real paths, selectors and commands when its milestone lands (see `AGENTS.md` section 3).
 > Milestones and flows: `BRIEF.md`. Reference screens: `docs/design/`.
+> M0 entries are real; the rest are still planned.
+
+## Shell, ventanas y andamiaje (M0, real)
+
+- What it is (user point of view): Pinza abre una franja transparente en el borde superior y tres ventanas normales que se abren solo cuando se piden.
+- Sub-features: ventana `line` siempre visible y estirada al ancho del monitor principal; `editor`, `settings` y `onboarding` creadas bajo demanda y destruidas al cerrarse; capa IPC tipada; export estático con las cuatro rutas.
+- How to reach it in the UI: `pnpm dev:debug` abre la línea; las demás ventanas se abren con el comando `open_window` (menú de bandeja en M4, gestos en M2 y M3).
+- Keyboard shortcuts: ninguno todavía (el atajo global llega con M1).
+- Selectors for programmatic control: `line-root`, `editor-root`, `settings-root`, `onboarding-root` (todos con `data-window` igual al nombre de la ventana).
+- Code location: `src/app/{line,editor,settings,onboarding}/page.tsx`, `src/shared/ui/window-shell.tsx`, `src/shared/motion/presets.ts`, `src/shared/ipc/`, `src-tauri/src/windows_mgr/mod.rs`, `src-tauri/src/commands/`.
+- Backend/API involved: comandos `app_info` y `open_window`; sin eventos todavía.
+- Known pitfalls: las rutas se generan con `trailingSlash`, así que las URLs llevan barra final (`/line/`); `open_window` rechaza `line`; el editor, los ajustes y el onboarding no existen hasta que se piden; la verificación por CDP necesita `pnpm dev:debug`. Sin toolchain de Rust, `pnpm verify:export` es la única prueba ejecutable del export.
+- Design: `docs/design/01-linea-desplegada.png`.
 
 ## Line (planned, M1)
 
