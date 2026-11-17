@@ -5,7 +5,7 @@ const listen = vi.fn();
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
 vi.mock("@tauri-apps/api/event", () => ({ listen }));
 
-const { getAppInfo, getShelf, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching } =
+const { getAppInfo, getShelf, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching, setLineInteractive } =
   await import("./api");
 
 describe("typed ipc layer", () => {
@@ -26,7 +26,7 @@ describe("typed ipc layer", () => {
 
   it("routes get_shelf without arguments", async () => {
     const shelf = [
-      { id: 1, path: "C:\\capturas\\a.png", fileName: "a.png", capturedAt: 1_720_000_000_000 },
+      { id: 1, path: "C:\\capturas\\a.png", thumbnail: "", fileName: "a.png", capturedAt: 1_720_000_000_000 },
     ];
     invoke.mockResolvedValueOnce(shelf);
 
@@ -48,10 +48,17 @@ describe("typed ipc layer", () => {
     expect(invoke).toHaveBeenCalledWith("resume_watching", {});
   });
 
+  it("routes set_line_interactive with its boolean flag", async () => {
+    invoke.mockResolvedValueOnce(null);
+
+    await expect(setLineInteractive(true)).resolves.toBeNull();
+    expect(invoke).toHaveBeenCalledWith("set_line_interactive", { interactive: true });
+  });
+
   it("subscribes to screenshot:added and returns its payload to the handler", async () => {
     const unlisten = vi.fn().mockResolvedValue(undefined);
     const handler = vi.fn();
-    const entry = { id: 2, path: "C:\\capturas\\b.png", fileName: "b.png", capturedAt: 1_720_000_001_000 };
+    const entry = { id: 2, path: "C:\\capturas\\b.png", thumbnail: "", fileName: "b.png", capturedAt: 1_720_000_001_000 };
     listen.mockImplementationOnce((_event, callback) => {
       callback({ payload: entry });
       return Promise.resolve(unlisten);
@@ -67,7 +74,7 @@ describe("typed ipc layer", () => {
   it("subscribes to screenshot:removed and returns its payload to the handler", async () => {
     const unlisten = vi.fn().mockResolvedValue(undefined);
     const handler = vi.fn();
-    const entry = { id: 1, path: "C:\\capturas\\a.png", fileName: "a.png", capturedAt: 1_720_000_000_000 };
+    const entry = { id: 1, path: "C:\\capturas\\a.png", thumbnail: "", fileName: "a.png", capturedAt: 1_720_000_000_000 };
     listen.mockImplementationOnce((_event, callback) => {
       callback({ payload: entry });
       return Promise.resolve(unlisten);

@@ -49,9 +49,15 @@ pub fn run() {
             commands::get_shelf::get_shelf,
             commands::watching::pause_watching,
             commands::watching::resume_watching,
+            commands::line::set_line_interactive,
         ])
         .setup(|app| {
             windows_mgr::attach_line_to_primary_monitor(app.handle())?;
+            if let Some(line) = app.get_webview_window(windows_mgr::LINE_LABEL) {
+                // La línea nace ignorando el ratón: la web avisa por IPC
+                // cuando el puntero pasa sobre una miniatura.
+                let _ = line.set_ignore_cursor_events(true);
+            }
             serve_thumbnails_scope(app.handle());
             setup_watcher(app.handle());
             Ok(())
