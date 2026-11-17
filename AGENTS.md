@@ -170,6 +170,7 @@ Every time a human has to write a review comment saying "don't do this", that is
 ## 6. Pull requests
 
 - Split work into **multiple atomic PRs**; each PR describes one small, coherent change. No hard size cap, but a reviewer must be able to understand and revert it in isolation.
+- **Size the delivery to fit the native review.** RDD rejects a candidate whose reviewer evidence exceeds its context budget (`lens_context_budget_exceeded`) and creates no review authority, so an oversized delivery cannot be reviewed at all. Aim for slices on the order of a few hundred changed lines, not thousands; a 10k-line bootstrap delivery is the canonical counter-example. Reviewing is why the cap exists, not tidiness.
 - Branch naming: `feature/<kebab-case>` or `fix/<kebab-case>`, always created from `dev`. Commit message format: Conventional Commits with the feature as scope (`feat(line): ...`, `fix(watcher): ...`, `test(annotate): ...`).
 - Agents commit, push and open the PR **against `dev`** automatically. Nobody but Albert ever pushes to, merges into or opens PRs against `main`.
 - PR description must contain:
