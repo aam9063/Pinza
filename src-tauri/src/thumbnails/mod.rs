@@ -34,7 +34,11 @@ pub fn thumbnail_path(cache: &Path, original: &Path) -> PathBuf {
     let stamp = original
         .metadata()
         .and_then(|m| m.modified())
-        .map(|t| t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs())
+        .map(|t| {
+            t.duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs()
+        })
         .unwrap_or(0);
     cache.join(format!("{stem}-{stamp}.png"))
 }
@@ -55,10 +59,9 @@ pub fn generate(original: &Path, cache: &Path) -> Result<PathBuf, ThumbnailError
         .save_with_format(&target, image::ImageFormat::Png)
         .map_err(|error| match error {
             image::ImageError::IoError(io) => ThumbnailError::Write(io, target.clone()),
-            other => ThumbnailError::Write(
-                std::io::Error::other(other.to_string()),
-                target.clone(),
-            ),
+            other => {
+                ThumbnailError::Write(std::io::Error::other(other.to_string()), target.clone())
+            }
         })?;
     Ok(target)
 }
@@ -97,7 +100,9 @@ mod tests {
             Rgba([(x % 256) as u8, (y % 256) as u8, 128, 255])
         });
         let path = dir.join(name);
-        image.save_with_format(&path, image::ImageFormat::Png).unwrap();
+        image
+            .save_with_format(&path, image::ImageFormat::Png)
+            .unwrap();
         path
     }
 
