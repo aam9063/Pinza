@@ -35,6 +35,8 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
   const [holdProgress, setHoldProgress] = useState(0);
   const holdStartedAt = useRef(0);
   const holdStarted = useRef(false);
+  /** True after a completed hold: the release click must not copy. */
+  const suppressClick = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -63,6 +65,9 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
     if (holdProgress <= 0 || !holdStarted.current) return undefined;
     if (holdProgress >= 1) {
       holdStarted.current = false;
+      // El gesto de mantener completa: el clic que el soltar genera después
+      // no debe copiar (los gestos del flujo 3 son excluyentes).
+      suppressClick.current = true;
       openWindowAnnotate();
       return undefined;
     }
@@ -73,10 +78,14 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
   }, [holdProgress]);
 
 
-  const onPointerDown = () => beginHold();
+  const onPointerDown = () => {
+    suppressClick.current = false;
+    beginHold();
+  };
   const onPointerUp = () => stopHold();
 
   const onClick = () => {
+    if (suppressClick.current) return;
     void copyImage(entry.path)
       .then(() => {
         setCopied(true);
