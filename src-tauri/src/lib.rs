@@ -14,7 +14,7 @@ mod thumbnails;
 mod watcher;
 mod windows_mgr;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use shelf::{HangOutcome, Shelf, ShelfEntry};
@@ -123,10 +123,30 @@ fn start_watching(app: &AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+/// Genera la miniatura de una captura usando la caché registrada en el
+/// shell. Si falla, la captura se cuelga igual con miniatura vacía.
+fn generate_thumbnail(app: &AppHandle, path: &Path) -> PathBuf {
+    let Some(cache) = app
+        .try_state::<Mutex<PathBuf>>()
+        .map(|state| state.lock().map(|dir| dir.clone()).unwrap_or_default())
+    else {
+        return PathBuf::new();
+    };
+
+    match thumbnails::generate(path, &cache) {
+        Ok(thumbnail) => thumbnail,
+        Err(error) => {
+            log::error!("no se pudo generar la miniatura de {path:?}: {error}");
+            PathBuf::new()
+        }
+    }
+}
+
 /// Cuelga una captura en la línea y emite los eventos de alta y de baja que
 /// correspondan (baja si el tope descolgó la más antigua).
 fn hang_screenshot(app: &AppHandle, path: PathBuf) {
-    let entry = ShelfEntry::from_path(&path);
+    let thumbnail = generate_thumbnail(app, &path);
+    let entry = ShelfEntry::from_path(&path).with_thumbnail(thumbnail);
 
     let outcome = match app.state::<Mutex<Shelf>>().lock() {
         Ok(mut shelf) => shelf.hang(entry.clone()),
