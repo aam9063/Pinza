@@ -50,6 +50,7 @@ export default function EditorWindow() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const exporterRef = useRef<(() => Promise<Uint8Array>) | null>(null);
   const handleExporterReady = useCallback((exporter: (() => Promise<Uint8Array>) | null) => {
+    logger.debug("exporter registrado:", exporter !== null);
     exporterRef.current = exporter;
   }, []);
   const dirty = state.annotations.length > 0;
@@ -99,8 +100,13 @@ export default function EditorWindow() {
   }, [copyAnnotatedToClipboard, renderAnnotatedPng]);
 
   const saveAndClose = useCallback(async () => {
+    logger.debug("guardar y cerrar: iniciado");
     const png = await renderAnnotatedPng();
-    if (!png) return;
+    if (!png) {
+      logger.error("guardar y cerrar: el export devolvió null");
+      return;
+    }
+    logger.debug("guardar y cerrar: png listo", png.length);
     await saveAnnotatedPng(png);
   }, [renderAnnotatedPng, saveAnnotatedPng]);
 
