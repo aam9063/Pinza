@@ -50,44 +50,59 @@
 
 ## Tasks
 
-| ID  | Tarea                                                                                                                                                          | Specs      | Ruta   | Commit    |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------ | --------- |
-| T1  | Bootstrap del repo: `dev` desde el árbol actual, rama `feature/m0-scaffolding` desde `dev`, `.gitignore`, `.editorconfig`, `.gitattributes`                    | S7         | inline | `8b2e9ec` |
-| T2  | Base web: pnpm + Next 16.4 export estático + React 19 + TS estricto + Tailwind v4 con tokens en `@theme`; 4 rutas que cargan                                   | S1, S3, S4 | inline | `955c0cd` |
-| T3  | Cimientos compartidos: `src/shared/motion/` (presets + `MotionConfig`), `src/shared/ui/`, `src/shared/ipc/` con dos comandos ejemplares tipados                | S5, S6, S7 | inline | `955c0cd` |
-| T4  | Shell Tauri 2: `Cargo.toml`, `tauri.conf.json`, capabilities, las cuatro ventanas, `windows_mgr`, comandos `app_info` y `open_window`, `#![deny(unsafe_code)]` | S1, S4, S6 | inline | `9a75c67` |
-| T5  | Calidad estática: ESLint plano + Prettier + typecheck + dependency-cruiser (`pnpm arch`) con las reglas de S6                                                  | S6, S9     | inline | `955c0cd` |
-| T6  | Tests: Vitest + Testing Library con RED observado por ruta, por capa IPC y por preset                                                                          | S1, S9     | inline | `955c0cd` |
-| T7  | Tooling de verificación por CDP + `verify:export` + `pnpm verify` agregador                                                                                    | S2, S8, S9 | inline | `7eac8dc` |
-| T8  | CI en `windows-latest`: job web y job de Rust                                                                                                                  | S1, S10    | inline | `f63dd59` |
-| T9  | README en castellano + `docs/feature-map.md` con las rutas reales de M0                                                                                        | S11, S8    | inline | `f63dd59` |
+| ID  | Tarea                                                                                                                        | Specs      | Ruta   | Commit    |
+| --- | ---------------------------------------------------------------------------------------------------------------------------- | ---------- | ------ | --------- |
+| T1  | Bootstrap del repo: `dev`, rama `feature/m0-scaffolding`, `.gitignore`, `.editorconfig`, `.gitattributes`                    | S7         | inline | `8b2e9ec` |
+| T2  | Base web: Next 16.4 export estático, React 19, TS estricto, Tailwind 4 con tokens y las cuatro rutas                         | S1, S3, S4 | inline | `955c0cd` |
+| T3  | Cimientos compartidos: presets de movimiento, `WindowShell`, capa IPC tipada con dos comandos                                | S5, S6, S7 | inline | `955c0cd` |
+| T4  | Shell Tauri 2: `Cargo.toml`, `tauri.conf.json`, capabilities, las cuatro ventanas, `windows_mgr`, `app_info` y `open_window` | S1, S4, S6 | inline | `9a75c67` |
+| T5  | Calidad estática: ESLint plano, Prettier, typecheck, dependency-cruiser con las fronteras de carpetas                        | S6, S9     | inline | `955c0cd` |
+| T6  | Tests: Vitest + Testing Library, RED observado antes de cada verde                                                           | S1, S9     | inline | `955c0cd` |
+| T7  | Tooling de verificación por CDP, `verify:export` y `pnpm verify` agregador                                                   | S2, S8, S9 | inline | `7eac8dc` |
+| T8  | CI en `windows-latest`: job web y job de Rust                                                                                | S1, S10    | inline | `f63dd59` |
+| T9  | README en castellano y mapa de features con M0 real                                                                          | S11, S8    | inline | `f63dd59` |
+| T10 | Arrancar la app con `pnpm dev:debug` y capturar las cuatro ventanas reales                                                   | S2, S4     | worker | `a70ef20` |
+| T11 | Arreglar el deadlock de `open_window`: comando síncrono bloqueando el hilo principal                                         | S4         | worker | `a70ef20` |
 
 ## Estado
 
-Hecho y verificado: T1, T2, T3, T5, T6, T7 (parte ejecutable), T8 (workflow escrito, sin ejecutar) y T9.
-T4 está escrito y **sin compilar**.
+M0 **cerrado en local**. Las dos patas que faltaban cuando se escribió la primera versión de este
+documento ya están verificadas: el toolchain de Rust se instaló y la app real se ejecutó.
 
-**S2 no se cumple todavía, y no es por el código:**
+| Criterio de S2                                                | Estado                                                                 |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `pnpm verify` (typecheck, lint, arch, test, build:web)        | 🟢 verde                                                               |
+| `pnpm verify:export` (cuatro rutas, cero peticiones externas) | 🟢 verde                                                               |
+| `cargo fmt --check`                                           | 🟢 sin diferencias                                                     |
+| `cargo clippy --all-targets -- -D warnings`                   | 🟢 cero avisos (`unwrap_used`/`expect_used` denegados fuera de tests)  |
+| `cargo test`                                                  | 🟢 3/3                                                                 |
+| `pnpm e2e` contra la app viva                                 | 🟢 4/4: abre las cuatro ventanas con `open_window`                     |
+| Captura de cada ventana abierta                               | 🟢 `line`, `editor`, `settings`, `onboarding` y el escritorio completo |
+| CI en verde                                                   | 🔴 escrito y sin ejecutar: falta el push, que decide Albert (L7)       |
 
-| Criterio de S2                              | Estado                                                                                                 |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `pnpm verify` en verde en local             | 🟢 sí                                                                                                  |
-| Captura de cada ventana abierta             | 🔴 no: `verify:export` captura las rutas en un navegador, no las ventanas de Tauri sobre el escritorio |
-| CI en verde                                 | 🔴 escrito y sin ejecutar: no se ha hecho push                                                         |
-| `cargo test` / `cargo clippy` / `cargo fmt` | 🔴 no ejecutados: no hay toolchain de Rust en la máquina (L4)                                          |
-
-Primera tarea de quien retome M0: instalar el toolchain de Rust, correr el job de Rust del workflow y
-abrir las cuatro ventanas con `pnpm dev:debug` + `pnpm verify:shot`.
+Queda una sola pata abierta de S2, y no es código: el workflow nunca se ha ejecutado porque la rama
+no se ha publicado.
 
 ## Evidencias
 
-- `pnpm verify` (typecheck, lint, arch, test, build:web): verde, 12 tests en 3 ficheros.
-- `pnpm verify:export`: las cuatro rutas del export estático cargan su ancla y no se hace ninguna petición
-  fuera del origen. Capturas en `.verify/shots/{line,editor,settings,onboarding}-export.png`.
-- `next build` genera `/line`, `/editor`, `/settings` y `/onboarding` como páginas estáticas.
-- Guardas probadas en las dos direcciones (creando ficheros que las violan y borrándolos): importar
-  `@tauri-apps/*` fuera de `src/shared/ipc/` (ESLint y dependency-cruiser), `framer-motion`, `"use server"`,
-  `console.log` y `any`.
+- `pnpm verify`: typecheck, ESLint, dependency-cruiser (18 módulos), 12 tests de Vitest y `next build`
+  con `/line`, `/editor`, `/settings` y `/onboarding` como páginas estáticas.
+- `pnpm verify:export`: las cuatro rutas cargan su ancla y no se hace ninguna petición fuera del origen.
+- Guardas probadas creando ficheros que las violan y borrándolos: `@tauri-apps/*` fuera de
+  `src/shared/ipc/` (ESLint y dependency-cruiser), `features-are-isolated`, `framer-motion`,
+  `"use server"`, `console.log` y `any`; y la contra-prueba en `src/shared/ipc/`, que pasa.
+- App real: `pnpm dev:debug` arranca en ~12 s con CDP en el 9222. `verify:ipc` verde con las cuatro
+  ventanas abiertas, `verify:network` verde (ninguna petición fuera del `devUrl` ni del protocolo de
+  assets) y capturas en `.verify/shots`: `line.png` 1920×160, `editor.png` 1080×720,
+  `settings.png` 720×640, `onboarding.png` 720×560, `desktop.png` 3840×1080.
+
+**Defecto encontrado y arreglado durante M0 (T11).** `open_window` era síncrono y Tauri ejecuta los
+comandos síncronos en el hilo principal: `WebviewWindowBuilder::build` bloqueaba ese hilo y la
+invocación se quedaba esperando a un hilo bloqueado por ella misma. Síntomas observados: la ventana
+nunca se creaba, ningún target nuevo en CDP y toda la IPC muerta después (el `app_info` posterior
+también expiraba) mientras el renderer seguía respondiendo en 2 ms. RED: `pnpm e2e` 1 verde y 3 rojos.
+GREEN tras pasar el comando a `async`: 4/4. Guard: el E2E, porque un test de Rust no puede observar un
+deadlock del bucle de eventos.
 
 ## Log
 
@@ -114,3 +129,12 @@ Se fija `typescript@6.0.3` y se subirá cuando `typescript-eslint` y dependency-
 **L6 (evidencia):** RED observado antes de crear las rutas (`Failed to resolve import "./editor/page"` con 8 tests ya en verde) y después GREEN. `pnpm verify` y `pnpm verify:export` en verde sobre el árbol commiteado.
 
 **L7 (falta decisión de Albert):** instalar el toolchain de Rust en esta máquina (o llevar el repo a una que lo tenga) para cerrar S2, y hacer push de `feature/m0-scaffolding` para que corra el CI. No se ha hecho push de nada.
+
+**L8 (defecto y arreglo):** `open_window` bloqueaba el hilo principal (ver Evidencias). Arreglado en `a70ef20` con `pub async fn`; no hizo falta `run_on_main_thread`. El doc-comment del comando cita la documentación de Tauri sobre comandos async, que es la excepción que `AGENTS.md` §5.1 permite para comportamiento de plataforma no obvio.
+
+**L9 (decisiones menores con motivo):**
+
+- `next dev` añade un bloque `<!-- BEGIN:nextjs-agent-rules -->` a `AGENTS.md` en cada arranque. No hay ajuste para desactivarlo (solo `experimental.agentFeedback`, que es otra cosa), así que se commitea: si no, el árbol queda sucio siempre.
+- `devIndicators: false` en `next.config.ts`: el indicador de desarrollo de Next salía en todas las capturas de verificación.
+- El E2E reintenta una vez con recarga si el dev server de Next sirve un 500 al compilar tres ventanas a la vez (`EPERM` en `.next/dev`). Es un fallo del servidor de desarrollo, no de la app: no existe en el export estático. Queda amortiguado, no eliminado.
+- `cargo clippy --all-targets -D warnings` no es sintaxis válida de cargo; la forma correcta (y la que usa el CI) es `cargo clippy --all-targets -- -D warnings`.
