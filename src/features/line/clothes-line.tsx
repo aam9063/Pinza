@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 
 import { onLineHidden, onLineShown, setLineInteractive } from "@/shared/ipc";
+import { logger } from "@/shared/log/logger";
 import { lineHidden, slideDown } from "@/shared/motion/presets";
 
 import { HangingThumbnail } from "./hanging-thumbnail";
@@ -22,7 +23,11 @@ export function ClothesLine() {
   useEffect(() => {
     const unlisteners = [onLineShown(() => setVisible(true)), onLineHidden(() => setVisible(false))];
     return () => {
-      for (const unlisten of unlisteners) void unlisten.then((fn) => fn());
+      for (const unlisten of unlisteners) {
+        unlisten
+          .then((fn) => fn())
+          .catch((error) => logger.error("no se pudo quitar el suscriptor de la línea", error));
+      }
     };
   }, []);
 

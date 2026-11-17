@@ -10,6 +10,7 @@ import {
   onScreenshotRemoved,
   type ShelfEntry,
 } from "@/shared/ipc";
+import { logger } from "@/shared/log/logger";
 
 /** Newest first: the line hangs new captures on the left end. */
 export function newestFirst(entries: readonly ShelfEntry[]): ShelfEntry[] {
@@ -39,7 +40,11 @@ export function useShelf(): ShelfEntry[] {
 
     return () => {
       alive = false;
-      for (const unlisten of unlisteners) void unlisten.then((fn) => fn());
+      for (const unlisten of unlisteners) {
+        unlisten
+          .then((fn) => fn())
+          .catch((error) => logger.error("no se pudo quitar el suscriptor del shelf", error));
+      }
     };
   }, []);
 
