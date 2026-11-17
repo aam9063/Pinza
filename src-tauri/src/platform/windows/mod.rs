@@ -15,7 +15,8 @@ pub struct CursorPoint {
     pub y: i32,
 }
 
-/// Posición actual del cursor en coordenadas físicas de pantalla.
+/// Posición actual del cursor en coordenadas físicas de pantalla. Devuelve
+/// `Err` con el motivo en lugar de degradar el estado a una suposición.
 #[cfg(windows)]
 pub fn cursor_position() -> Result<CursorPoint, String> {
     use windows::Win32::Foundation::POINT;
@@ -40,7 +41,9 @@ pub fn cursor_position() -> Result<CursorPoint, String> {
 }
 
 /// `true` si la ventana en primer plano cubre todo el monitor primario
-/// (juego, vídeo o presentación a pantalla completa).
+/// (juego, vídeo o presentación a pantalla completa). Un fallo de la API
+/// se registra y se devuelve `false` solo con el motivo en el log: si el
+/// monitor no se puede consultar, la línea no debe aparecer a ciegas.
 #[cfg(windows)]
 pub fn fullscreen_app_active() -> bool {
     use windows::Win32::Foundation::RECT;
@@ -54,6 +57,7 @@ pub fn fullscreen_app_active() -> bool {
     // <https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-getforegroundwindow>
     let foreground = unsafe { GetForegroundWindow() };
     if foreground.is_invalid() {
+        log::warn!("no hay ventana en primer plano consultable: se asume sin pantalla completa");
         return false;
     }
 
@@ -61,10 +65,17 @@ pub fn fullscreen_app_active() -> bool {
     // SAFETY: GetWindowRect escribe sobre el RECT del llamante con un handle
     // de ventana válido; no hay invariante adicional.
     // <https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-getwindowrect>
-    if unsafe { GetWindowRect(foreground, &mut window_rect) }.is_err() {
+    if let Err(error) = unsafe { GetWindowRect(foreground, &mut window_rect) } {
+        log::warn!(
+            "no se pudo medir la ventana en primer plano: {error}; se asume sin pantalla completa"
+        );
         return false;
     }
     let monitor = unsafe { MonitorFromWindow(foreground, MONITOR_DEFAULTTOPRIMARY) };
+    if monitor.is_invalid() {
+        log::warn!("no se pudo resolver el monitor de la ventana en primer plano: se asume sin pantalla completa");
+        return false;
+    }
     if monitor.is_invalid() {
         return false;
     }
@@ -75,15 +86,15 @@ pub fn fullscreen_app_active() -> bool {
         cbSize: std::mem::size_of::<MONITORINFO>() as u32,
         ..Default::default()
     };
-    if unsafe { GetMonitorInfoW(monitor, &mut info) }.as_bool() {
-        let m = info.rcMonitor;
-        window_rect.left <= m.left
-            && window_rect.top <= m.top
-            && window_rect.right >= m.right
-            && window_rect.bottom >= m.bottom
-    } else {
-        false
+    if !unsafe { GetMonitorInfoW(monitor, &mut info) }.as_bool() {
+        log::warn!("no se pudo leer el monitor primario: se asume sin pantalla completa");
+        return false;
     }
+    let m = info.rcMonitor;
+    window_rect.left <= m.left
+        && window_rect.top <= m.top
+        && window_rect.right >= m.right
+        && window_rect.bottom >= m.bottom
 }
 
 #[cfg(not(windows))]
