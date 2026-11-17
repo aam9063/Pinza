@@ -33,9 +33,12 @@ pub struct WatcherConfig {
 
 impl Default for WatcherConfig {
     fn default() -> Self {
+        // El presupuesto de BRIEF §6 es captura guardada → miniatura visible
+        // en < 300 ms: la espera total del vigilante (debounce + dos muestras
+        // de estabilidad) tiene que caber en menos de la mitad de ese margen.
         Self {
-            debounce: Duration::from_millis(500),
-            stability_window: Duration::from_millis(150),
+            debounce: Duration::from_millis(120),
+            stability_window: Duration::from_millis(60),
             write_deadline: Duration::from_secs(10),
         }
     }
@@ -391,9 +394,13 @@ mod tests {
     }
 
     #[test]
-    fn the_default_config_waits_for_quiet_writes() {
+    fn the_default_config_leaves_room_for_the_visibility_budget() {
         let config = WatcherConfig::default();
-        assert!(config.debounce >= Duration::from_millis(500));
+        // BRIEF §6: captura guardada → miniatura visible en < 300 ms; la
+        // espera del vigilante (debounce + dos muestras de estabilidad) no
+        // puede consumir ese presupuesto entera.
+        let total_wait = config.debounce + config.stability_window * 2;
+        assert!(total_wait < Duration::from_millis(300));
         assert!(config.stability_window > Duration::ZERO);
         assert!(config.write_deadline > config.stability_window * 2);
     }
