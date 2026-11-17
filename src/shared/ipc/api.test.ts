@@ -5,7 +5,7 @@ const listen = vi.fn();
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
 vi.mock("@tauri-apps/api/event", () => ({ listen }));
 
-const { getAppInfo, getShelf, onLineHidden, onLineShown, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching, setLineInteractive } =
+const { copyImage, getAppInfo, getShelf, onLineHidden, onLineShown, openFile, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching, setLineInteractive, startDrag, trashFile } =
   await import("./api");
 
 describe("typed ipc layer", () => {
@@ -70,6 +70,22 @@ describe("typed ipc layer", () => {
     expect(listen).toHaveBeenCalledWith(event, expect.any(Function));
     expect(handler).toHaveBeenCalledWith(undefined);
     expect(unsubscribe).toBe(unlisten);
+  });
+
+  it.each([
+    ["copy_image", copyImage],
+    ["open_file", openFile],
+    ["trash_file", trashFile],
+  ])("routes %s with the screenshot path", async (command, call) => {
+    const outcome = { path: "C:/capturas/a.png" };
+    invoke.mockResolvedValueOnce(outcome);
+
+    await expect(call("C:/capturas/a.png")).resolves.toEqual(outcome);
+    expect(invoke).toHaveBeenCalledWith(command, { path: "C:/capturas/a.png" });
+  });
+
+  it("startDrag reports the dragged path without going through invoke", async () => {
+    await expect(startDrag("C:/capturas/a.png")).resolves.toEqual({ path: "C:/capturas/a.png" });
   });
 
   it("subscribes to screenshot:added and returns its payload to the handler", async () => {

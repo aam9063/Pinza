@@ -1,11 +1,12 @@
 /** Typed command wrappers. Components call these, never `invoke` directly. */
-import { invokeCommand, listenEvent, type Unlisten } from "./client";
+import { invokeCommand, listenEvent, startFileDrag, type Unlisten } from "./client";
 import {
   LINE_HIDE_EVENT,
   LINE_SHOW_EVENT,
   SCREENSHOT_ADDED_EVENT,
   SCREENSHOT_REMOVED_EVENT,
   type AppInfo,
+  type FileOutcome,
   type OpenableWindowLabel,
   type ShelfEntry,
 } from "./contract";
@@ -56,4 +57,25 @@ export function onLineShown(handler: () => void): Promise<Unlisten> {
 /** The line hides itself: cursor left the strip, fullscreen app or shortcut. */
 export function onLineHidden(handler: () => void): Promise<Unlisten> {
   return listenEvent<void>(LINE_HIDE_EVENT, handler);
+}
+
+/** Copies the screenshot image to the clipboard as a PNG image. */
+export function copyImage(path: string): Promise<FileOutcome> {
+  return invokeCommand("copy_image", { path });
+}
+
+/** Opens the screenshot with the default Windows viewer. */
+export function openFile(path: string): Promise<FileOutcome> {
+  return invokeCommand("open_file", { path });
+}
+
+/** Moves the screenshot to the Recycle Bin (never a permanent delete). */
+export function trashFile(path: string): Promise<FileOutcome> {
+  return invokeCommand("trash_file", { path });
+}
+
+/** Starts the native OS drag of the screenshot file to other apps. */
+export function startDrag(path: string): Promise<FileOutcome> {
+  void startFileDrag(path);
+  return Promise.resolve({ path });
 }
