@@ -2,11 +2,12 @@
 
 import { AnimatePresence } from "motion/react";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { motion } from "motion/react";
 
-import { setLineInteractive } from "@/shared/ipc";
+import { onLineHidden, onLineShown, setLineInteractive } from "@/shared/ipc";
+import { logger } from "@/shared/log/logger";
 import { lineHidden, slideDown } from "@/shared/motion/presets";
 
 import { HangingThumbnail } from "./hanging-thumbnail";
@@ -17,6 +18,18 @@ export function ClothesLine() {
   const entries = useShelf();
   const newestId = entries[0]?.id;
   const interactive = useRef(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const unlisteners = [onLineShown(() => setVisible(true)), onLineHidden(() => setVisible(false))];
+    return () => {
+      for (const unlisten of unlisteners) {
+        unlisten
+          .then((fn) => fn())
+          .catch((error) => logger.error("no se pudo quitar el suscriptor de la línea", error));
+      }
+    };
+  }, []);
 
   const handlePointerMove = (event: React.PointerEvent<HTMLElement>) => {
     const overThumbnail = (event.target as HTMLElement).closest("[data-testid^='thumbnail-']");
@@ -32,7 +45,7 @@ export function ClothesLine() {
       className="flex h-full w-full items-start overflow-hidden"
       variants={lineHidden}
       initial="hidden"
-      animate="visible"
+      animate={visible ? "visible" : "hidden"}
       transition={slideDown}
       onPointerMove={handlePointerMove}
     >

@@ -1,6 +1,8 @@
 /** Typed command wrappers. Components call these, never `invoke` directly. */
 import { invokeCommand, listenEvent, type Unlisten } from "./client";
 import {
+  LINE_HIDE_EVENT,
+  LINE_SHOW_EVENT,
   SCREENSHOT_ADDED_EVENT,
   SCREENSHOT_REMOVED_EVENT,
   type AppInfo,
@@ -44,4 +46,14 @@ export function onScreenshotRemoved(
   handler: (entry: ShelfEntry) => void,
 ): Promise<Unlisten> {
   return listenEvent<ShelfEntry>(SCREENSHOT_REMOVED_EVENT, handler);
+}
+
+/** The line reveals itself: edge dwell or the Ctrl+Alt+T global shortcut. */
+export function onLineShown(handler: () => void): Promise<Unlisten> {
+  return listenEvent<void>(LINE_SHOW_EVENT, handler);
+}
+
+/** The line hides itself: cursor left the strip, fullscreen app or shortcut. */
+export function onLineHidden(handler: () => void): Promise<Unlisten> {
+  return listenEvent<void>(LINE_HIDE_EVENT, handler);
 }

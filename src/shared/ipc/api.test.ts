@@ -5,7 +5,7 @@ const listen = vi.fn();
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
 vi.mock("@tauri-apps/api/event", () => ({ listen }));
 
-const { getAppInfo, getShelf, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching, setLineInteractive } =
+const { getAppInfo, getShelf, onLineHidden, onLineShown, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching, setLineInteractive } =
   await import("./api");
 
 describe("typed ipc layer", () => {
@@ -53,6 +53,23 @@ describe("typed ipc layer", () => {
 
     await expect(setLineInteractive(true)).resolves.toBeNull();
     expect(invoke).toHaveBeenCalledWith("set_line_interactive", { interactive: true });
+  });
+
+  it.each([
+    ["line:show", onLineShown],
+    ["line:hide", onLineHidden],
+  ])("subscribes to %s and returns nothing to the handler", async (event, subscribe) => {
+    const unlisten = vi.fn().mockResolvedValue(undefined);
+    const handler = vi.fn();
+    listen.mockImplementationOnce((_event, callback) => {
+      callback({ payload: undefined });
+      return Promise.resolve(unlisten);
+    });
+
+    const unsubscribe = await subscribe(handler);
+    expect(listen).toHaveBeenCalledWith(event, expect.any(Function));
+    expect(handler).toHaveBeenCalledWith(undefined);
+    expect(unsubscribe).toBe(unlisten);
   });
 
   it("subscribes to screenshot:added and returns its payload to the handler", async () => {

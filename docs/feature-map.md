@@ -16,16 +16,16 @@
 - Known pitfalls: las rutas se generan con `trailingSlash`, así que las URLs llevan barra final (`/line/`); `open_window` rechaza `line`; el editor, los ajustes y el onboarding no existen hasta que se piden; la verificación por CDP necesita `pnpm dev:debug`. Sin toolchain de Rust, `pnpm verify:export` es la única prueba ejecutable del export.
 - Design: `docs/design/01-linea-desplegada.png`.
 
-## Línea (prevista, M1)
+## Línea (M1b-M1c reales; gestos quedan para M2)
 
 - Qué es (punto de vista del usuario): una cuerda en el borde superior de la pantalla donde cada captura nueva cuelga como miniatura.
-- Sub-features: despliegue al rozar el borde, despliegue por atajo, ocultarse sola, animación de caída al colgar, etiqueta "Nueva", máximo de miniaturas con descolgado de la más antigua, ocultarse en pantalla completa.
+- Sub-features: despliegue al rozar el borde, despliegue por atajo, ocultarse sola, animación de caída al colgar, etiqueta "Nueva", máximo de miniaturas con descolgado de la más antigua, ocultarse en pantalla completa, miniaturas generadas en Rust.
 - Cómo se llega: haciendo una captura (Win + Impr Pant), llevando el cursor al borde superior o pulsando Ctrl + Alt + T.
-- Atajos: Ctrl + Alt + T (configurable).
-- Selectores para control programático: `line-root`, `line-thumb-<id>`, `line-thumb-new-badge` (previstos).
-- Ubicación del código: `src/features/line/`, `src/app/line/page.tsx`, `src-tauri/src/shelf/`, `src-tauri/src/windows_mgr/`, `src-tauri/src/platform/windows/` (pantalla completa, cursor).
-- Backend/API: eventos `screenshot:added`, `screenshot:removed`, `line:show`, `line:hide`; comando `get_shelf` (previstos).
-- Trampas conocidas: el clic debe atravesar la ventana fuera de las miniaturas; la ventana transparente no debe robar el foco; escalado DPI por monitor.
+- Atajos: Ctrl + Alt + T (configurable en M4).
+- Selectores para control programático: `clothes-line`, `thumbnail-<id>`, `peg-<id>`, `thumb-image-<id>`, `thumb-time-<id>`, `thumb-new-<id>`.
+- Ubicación del código: `src/features/line/`, `src/app/line/page.tsx`, `src-tauri/src/shelf/`, `src-tauri/src/thumbnails/`, `src-tauri/src/reveal/`, `src-tauri/src/windows_mgr/`, `src-tauri/src/platform/windows/` (pantalla completa, cursor), `src-tauri/src/commands/{get_shelf,watching,line}.rs`.
+- Backend/API: eventos `screenshot:added`, `screenshot:removed`, `line:show`, `line:hide`; comandos `get_shelf`, `pause_watching`, `resume_watching`, `set_line_interactive`; miniaturas por el protocolo de assets.
+- Trampas conocidas: el clic debe atravesar la ventana fuera de las miniaturas; la ventana transparente no debe robar el foco; escalado DPI por monitor; Motion solo admite 2 keyframes con spring; tras ocultar con el atajo la zona del borde queda desarmada hasta que el cursor la abandona.
 - Diseño: `docs/design/01-linea-desplegada.png`.
 
 ## Vigilante de capturas (M1a real; miniaturas quedan para M1b)
