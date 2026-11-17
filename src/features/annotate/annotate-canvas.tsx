@@ -388,7 +388,7 @@ export function AnnotateCanvas({
                 );
               case "step":
                 return (
-                  <Group key={annotation.id} {...common}>
+                  <Group key={annotation.id} {...common} x={annotation.x} y={annotation.y}>
                     <Circle
                       radius={annotation.radius}
                       fill={annotation.color}
