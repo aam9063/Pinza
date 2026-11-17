@@ -23,6 +23,9 @@ static NEXT_ENTRY_ID: AtomicU64 = AtomicU64::new(1);
 pub struct ShelfEntry {
     id: u64,
     path: PathBuf,
+    /// Miniatura servida por el protocolo de assets; vacía si aún no se
+    /// generó (la captura se cuelga igual, la miniatura llega cuando pueda).
+    thumbnail: PathBuf,
     file_name: String,
     /// Milisegundos desde la época Unix (hora del fichero según el disco).
     captured_at: u64,
@@ -39,9 +42,16 @@ impl ShelfEntry {
         Self {
             id: NEXT_ENTRY_ID.fetch_add(1, Ordering::Relaxed),
             path,
+            thumbnail: PathBuf::new(),
             file_name,
             captured_at,
         }
+    }
+
+    /// Adjunta la ruta de la miniatura generada en la caché.
+    pub fn with_thumbnail(mut self, thumbnail: PathBuf) -> Self {
+        self.thumbnail = thumbnail;
+        self
     }
 
     /// Crea una entrada leyendo la hora de captura de los metadatos del
@@ -321,6 +331,7 @@ mod tests {
                 "id": entry.id(),
                 "path": entry.path().to_string_lossy(),
                 "fileName": "captura.png",
+                "thumbnail": "",
                 "capturedAt": 1_720_000_000_000u64,
             })
         );
@@ -330,7 +341,7 @@ mod tests {
                 .expect("el payload es un objeto")
                 .keys()
                 .count(),
-            4
+            5
         );
     }
 

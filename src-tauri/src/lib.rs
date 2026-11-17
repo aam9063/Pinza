@@ -10,10 +10,11 @@
 mod commands;
 mod platform;
 mod shelf;
+mod thumbnails;
 mod watcher;
 mod windows_mgr;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use shelf::{HangOutcome, Shelf, ShelfEntry};
@@ -21,6 +22,21 @@ use tauri::{AppHandle, Emitter, Manager};
 use watcher::{OnScreenshot, WatchControl, WatcherConfig};
 
 const WATCH_DIR_ENV: &str = "PINZA_WATCH_DIR";
+const DATA_DIR_ENV: &str = "PINZA_DATA_DIR";
+
+/// Carpeta de datos de Pinza: la que fija `PINZA_DATA_DIR` (verificación y
+/// desarrollo) o la estándar de la app. Solo la carpeta de miniaturas se
+/// sirve por el protocolo de assets, nunca las capturas originales.
+fn resolve_data_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    if let Ok(data_dir) = std::env::var(DATA_DIR_ENV) {
+        if !data_dir.trim().is_empty() {
+            return Ok(PathBuf::from(data_dir));
+        }
+    }
+    app.path()
+        .app_data_dir()
+        .map_err(|error| format!("no se pudo resolver la carpeta de datos: {error}"))
+}
 
 pub fn run() {
     let result = tauri::Builder::default()
@@ -33,9 +49,16 @@ pub fn run() {
             commands::get_shelf::get_shelf,
             commands::watching::pause_watching,
             commands::watching::resume_watching,
+            commands::line::set_line_interactive,
         ])
         .setup(|app| {
             windows_mgr::attach_line_to_primary_monitor(app.handle())?;
+            if let Some(line) = app.get_webview_window(windows_mgr::LINE_LABEL) {
+                // La línea nace ignorando el ratón: la web avisa por IPC
+                // cuando el puntero pasa sobre una miniatura.
+                let _ = line.set_ignore_cursor_events(true);
+            }
+            serve_thumbnails_scope(app.handle());
             setup_watcher(app.handle());
             Ok(())
         })
@@ -45,6 +68,35 @@ pub fn run() {
         log::error!("el shell de Pinza no pudo arrancar: {error}");
         std::process::exit(1);
     }
+}
+
+/// Sirve solo la carpeta de miniaturas por el protocolo de assets de Tauri:
+/// la web puede pintar miniaturas pero no abrir las capturas originales.
+fn serve_thumbnails_scope(app: &AppHandle) {
+    let scope = app.asset_protocol_scope();
+
+    let data_dir = match resolve_data_dir(app) {
+        Ok(dir) => dir,
+        Err(error) => {
+            log::error!("{error}");
+            return;
+        }
+    };
+    let cache = thumbnails::cache_dir(&data_dir);
+
+    if let Err(error) = std::fs::create_dir_all(&cache) {
+        log::error!("no se pudo crear la caché de miniaturas: {error}");
+        return;
+    }
+    if let Err(error) = scope.allow_directory(&cache, true) {
+        log::error!("no se pudo permitir la carpeta de miniaturas en el scope: {error}");
+        return;
+    }
+
+    if !app.manage(Mutex::new(cache.clone())) {
+        log::error!("no se pudo registrar la caché de miniaturas");
+    }
+    log::info!("miniaturas servidas desde {cache:?}");
 }
 
 /// Arranca la vigilancia sin impedir que la app abra: la bandeja y las
@@ -77,10 +129,30 @@ fn start_watching(app: &AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+/// Genera la miniatura de una captura usando la caché registrada en el
+/// shell. Si falla, la captura se cuelga igual con miniatura vacía.
+fn generate_thumbnail(app: &AppHandle, path: &Path) -> PathBuf {
+    let Some(cache) = app
+        .try_state::<Mutex<PathBuf>>()
+        .map(|state| state.lock().map(|dir| dir.clone()).unwrap_or_default())
+    else {
+        return PathBuf::new();
+    };
+
+    match thumbnails::generate(path, &cache) {
+        Ok(thumbnail) => thumbnail,
+        Err(error) => {
+            log::error!("no se pudo generar la miniatura de {path:?}: {error}");
+            PathBuf::new()
+        }
+    }
+}
+
 /// Cuelga una captura en la línea y emite los eventos de alta y de baja que
 /// correspondan (baja si el tope descolgó la más antigua).
 fn hang_screenshot(app: &AppHandle, path: PathBuf) {
-    let entry = ShelfEntry::from_path(&path);
+    let thumbnail = generate_thumbnail(app, &path);
+    let entry = ShelfEntry::from_path(&path).with_thumbnail(thumbnail);
 
     let outcome = match app.state::<Mutex<Shelf>>().lock() {
         Ok(mut shelf) => shelf.hang(entry.clone()),

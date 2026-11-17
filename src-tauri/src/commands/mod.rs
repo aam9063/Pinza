@@ -2,6 +2,7 @@
 
 pub mod app_info;
 pub mod get_shelf;
+pub mod line;
 pub mod open_window;
 pub mod watching;
 

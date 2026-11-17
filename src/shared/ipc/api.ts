@@ -29,6 +29,11 @@ export function resumeWatching(): Promise<null> {
   return invokeCommand("resume_watching", {});
 }
 
+/** Lets clicks reach Pinza only while the pointer is over a thumbnail. */
+export function setLineInteractive(interactive: boolean): Promise<null> {
+  return invokeCommand("set_line_interactive", { interactive });
+}
+
 export function onScreenshotAdded(
   handler: (entry: ShelfEntry) => void,
 ): Promise<Unlisten> {

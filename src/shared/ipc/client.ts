@@ -3,7 +3,7 @@
  *
  * Everything else imports the typed wrappers from `src/shared/ipc`.
  */
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 import type { CommandMap } from "./contract";
@@ -19,4 +19,9 @@ export function invokeCommand<K extends keyof CommandMap>(
 
 export function listenEvent<T>(event: string, handler: (payload: T) => void): Promise<UnlistenFn> {
   return listen<T>(event, (message) => handler(message.payload));
+}
+
+/** Turns a filesystem path into an asset-protocol URL served by the shell. */
+export function assetUrl(filePath: string): string {
+  return convertFileSrc(filePath);
 }

@@ -13,6 +13,8 @@ export interface AppInfo {
 export interface ShelfEntry {
   readonly id: number;
   readonly path: string;
+  /** Asset-protocol URL of the cached thumbnail; empty until generated. */
+  readonly thumbnail: string;
   readonly fileName: string;
   /** Milliseconds since the Unix epoch, as reported by the file metadata. */
   readonly capturedAt: number;
@@ -29,6 +31,7 @@ export interface CommandMap {
     readonly result: readonly ShelfEntry[];
   };
   readonly pause_watching: { readonly args: Record<string, never>; readonly result: null };
+  readonly set_line_interactive: { readonly args: { readonly interactive: boolean }; readonly result: null };
   readonly resume_watching: { readonly args: Record<string, never>; readonly result: null };
 }
 

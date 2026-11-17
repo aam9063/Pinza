@@ -35,8 +35,9 @@
 - Cómo se llega: no hay interfaz; se configura en Ajustes > Capturas y en el paso 1 del asistente.
 - Atajos: ninguno.
 - Selectores para control programático: ninguno (se dirige con `pnpm seed:screenshots`).
-- Ubicación del código: `src-tauri/src/watcher/`, `src-tauri/src/shelf/`, `src-tauri/src/commands/get_shelf.rs`, `src-tauri/src/commands/watching.rs`.
-- Backend/API: emite `screenshot:added` y `screenshot:removed`; comandos `get_shelf`, `pause_watching`, `resume_watching`.
+- Ubicación del código: `src-tauri/src/watcher/`, `src-tauri/src/shelf/`, `src-tauri/src/thumbnails/`, `src-tauri/src/commands/{get_shelf,watching,line}.rs`, `src/features/line/`.
+- Backend/API: emite `screenshot:added` y `screenshot:removed`; comandos `get_shelf`, `pause_watching`, `resume_watching`, `set_line_interactive`; miniaturas por el protocolo de assets desde la caché de datos.
+- Selectores para control programático: `clothes-line`, `thumbnail-<id>`, `peg-<id>`, `thumb-image-<id>`, `thumb-time-<id>`, `thumb-new-<id>`.
 - Trampas conocidas: el Recortes puede escribir en varios pasos; la carpeta puede estar redirigida (OneDrive); nunca vigilar la carpeta real en las pruebas.
 
 ## Gestos sobre miniaturas (prevista, M2)
