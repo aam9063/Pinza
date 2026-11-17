@@ -18,9 +18,21 @@ pub async fn open_window(
     // El editor siempre abre sobre una captura concreta: el shell la guarda
     // como objetivo (Rust es la fuente de verdad) y la web se la pide.
     if let Some(path) = capture_path {
+        let target_path = std::path::PathBuf::from(&path);
+        if !target_path.is_file() {
+            return Err(format!("la captura a anotar no existe: {path}"));
+        }
+        // El scope de assets solo cubre las miniaturas: se permite también el
+        // fichero concreto que el editor va a abrir, nunca la carpeta entera
+        // de capturas (BRIEF §5.3).
+        app.asset_protocol_scope()
+            .allow_file(&target_path)
+            .map_err(|error| {
+                format!("no se pudo permitir la captura en el scope de assets: {error}")
+            })?;
         app.state::<std::sync::Mutex<EditorTarget>>()
             .lock()
-            .map(|mut target| *target = EditorTarget { path: path.into() })
+            .map(|mut target| *target = EditorTarget { path: target_path })
             .map_err(|_| "el objetivo del editor está envenenado".to_string())?;
     }
     windows_mgr::open(&app, label).map_err(|error| error.to_string())
