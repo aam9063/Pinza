@@ -7,7 +7,19 @@
  * slider. Copy / save / the rest of the tools land in M3b.
  */
 import { useCallback, useEffect, useReducer, useState } from "react";
-import { MousePointer2, Pencil, Redo2, Undo2 } from "lucide-react";
+import {
+  Circle,
+  CircleDot,
+  Highlighter,
+  MousePointer2,
+  Pencil,
+  Redo2,
+  Slash,
+  Square,
+  Type,
+  Undo2,
+  Waypoints,
+} from "lucide-react";
 
 import { WindowShell } from "@/shared/ui/window-shell";
 
@@ -19,14 +31,14 @@ import {
   INITIAL_STATE,
   QUICK_COLORS,
   QUICK_WIDTHS,
+  TOOL_SHORTCUTS,
   type ToolId,
 } from "@/features/annotate/store";
 import { useEditorCapture } from "@/features/annotate/use-editor-capture";
 
-const TOOL_SHORTCUTS: Record<string, ToolId> = {
-  v: "select",
-  p: "pencil",
-};
+const KEY_TO_TOOL: Record<string, ToolId> = Object.fromEntries(
+  TOOL_SHORTCUTS.map(({ tool, key }) => [key.toLowerCase(), tool]),
+);
 
 export default function EditorWindow() {
   const capture = useEditorCapture();
@@ -46,13 +58,18 @@ export default function EditorWindow() {
         dispatch({ type: "redo" });
         return;
       }
+      if ((event.ctrlKey || event.metaKey) && key === "d") {
+        event.preventDefault();
+        if (selectedId) dispatch({ type: "duplicate", id: selectedId });
+        return;
+      }
       if (event.key === "Delete" && selectedId) {
         event.preventDefault();
         dispatch({ type: "delete", ids: [selectedId] });
         setSelectedId(null);
         return;
       }
-      const tool = TOOL_SHORTCUTS[key];
+      const tool = KEY_TO_TOOL[key];
       if (tool && !event.ctrlKey && !event.metaKey && !event.altKey) {
         dispatch({ type: "set-tool", tool });
       }
@@ -66,6 +83,16 @@ export default function EditorWindow() {
   }, [onKeyDown]);
 
   const setTool = (tool: ToolId) => dispatch({ type: "set-tool", tool });
+
+  const applyColor = (color: string) => {
+    dispatch({ type: "set-color", color });
+    if (selectedId) dispatch({ type: "style", id: selectedId, color });
+  };
+
+  const applyWidth = (width: number) => {
+    dispatch({ type: "set-width", width });
+    if (selectedId) dispatch({ type: "style", id: selectedId, width });
+  };
 
   return (
     <WindowShell window="editor">
@@ -89,6 +116,62 @@ export default function EditorWindow() {
             onClick={() => setTool("pencil")}
           >
             <Pencil className="h-4 w-4" />
+          </ToolButton>
+          <ToolButton
+            testId="editor-tool-highlighter"
+            label="Resaltador (H)"
+            active={state.tool === "highlighter"}
+            onClick={() => setTool("highlighter")}
+          >
+            <Highlighter className="h-4 w-4" />
+          </ToolButton>
+          <ToolButton
+            testId="editor-tool-arrow"
+            label="Flecha (A)"
+            active={state.tool === "arrow"}
+            onClick={() => setTool("arrow")}
+          >
+            <Waypoints className="h-4 w-4" />
+          </ToolButton>
+          <ToolButton
+            testId="editor-tool-line"
+            label="Línea (L)"
+            active={state.tool === "line"}
+            onClick={() => setTool("line")}
+          >
+            <Slash className="h-4 w-4" />
+          </ToolButton>
+          <ToolButton
+            testId="editor-tool-rectangle"
+            label="Rectángulo (R)"
+            active={state.tool === "rectangle"}
+            onClick={() => setTool("rectangle")}
+          >
+            <Square className="h-4 w-4" />
+          </ToolButton>
+          <ToolButton
+            testId="editor-tool-ellipse"
+            label="Elipse (E)"
+            active={state.tool === "ellipse"}
+            onClick={() => setTool("ellipse")}
+          >
+            <Circle className="h-4 w-4" />
+          </ToolButton>
+          <ToolButton
+            testId="editor-tool-text"
+            label="Texto (T)"
+            active={state.tool === "text"}
+            onClick={() => setTool("text")}
+          >
+            <Type className="h-4 w-4" />
+          </ToolButton>
+          <ToolButton
+            testId="editor-tool-step"
+            label="Paso numerado (N)"
+            active={state.tool === "step"}
+            onClick={() => setTool("step")}
+          >
+            <CircleDot className="h-4 w-4" />
           </ToolButton>
           <ToolButton
             testId="editor-undo"
@@ -117,7 +200,7 @@ export default function EditorWindow() {
               data-testid={`editor-color-${color.replace("#", "")}`}
               className={`h-6 w-6 rounded-full border-2 ${state.color === color ? "border-accent" : "border-transparent"}`}
               style={{ backgroundColor: color }}
-              onClick={() => dispatch({ type: "set-color", color })}
+              onClick={() => applyColor(color)}
             />
           ))}
           <input
@@ -126,7 +209,7 @@ export default function EditorWindow() {
             title="Elegir color"
             data-testid="editor-color-picker"
             value={state.color}
-            onChange={(event) => dispatch({ type: "set-color", color: event.target.value })}
+            onChange={(event) => applyColor(event.target.value)}
             className="h-6 w-8 cursor-pointer rounded"
           />
 
@@ -139,7 +222,7 @@ export default function EditorWindow() {
               aria-label={`Grosor ${width} px`}
               data-testid={`editor-width-${width}`}
               className={`grid h-7 w-7 place-items-center rounded ${state.strokeWidth === width ? "bg-ink/10" : ""}`}
-              onClick={() => dispatch({ type: "set-width", width })}
+              onClick={() => applyWidth(width)}
             >
               <span
                 className="block rounded-full bg-ink"
@@ -155,7 +238,7 @@ export default function EditorWindow() {
             title="Grosor del trazo"
             data-testid="editor-width-slider"
             value={state.strokeWidth}
-            onChange={(event) => dispatch({ type: "set-width", width: Number(event.target.value) })}
+            onChange={(event) => applyWidth(Number(event.target.value))}
             className="w-24"
           />
         </div>
