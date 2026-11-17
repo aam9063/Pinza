@@ -111,7 +111,11 @@ export function AnnotateCanvas({
       onSelect(null);
       return;
     }
-    if (!drawing || event.target !== event.target.getStage()) return;
+    // Dibuja en cualquier parte vacía del lienzo: solo un Path existente
+    // (target de una anotación) bloquea un trazo nuevo.
+    if (!drawing || event.target.getStage()?.find("Path").some((path) => path === event.target)) {
+      return;
+    }
     setDraftPoints(toImageCoords(event.target.getStage()?.getPointerPosition() ?? null));
   };
 
