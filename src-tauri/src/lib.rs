@@ -66,13 +66,20 @@ pub fn run() {
                 // cuando el puntero pasa sobre una miniatura.
                 let _ = line.set_ignore_cursor_events(true);
             }
-            app.global_shortcut()
-                .on_shortcut("ctrl+alt+t", |app, _shortcut, event| {
-                    if event.state() == ShortcutState::Pressed {
-                        app.state::<RevealControl>().request_toggle();
-                    }
-                })
-                .map_err(|error| format!("no se pudo registrar el atajo global: {error}"))?;
+            // El atajo es opcional para arrancar: si otro programa ya lo
+            // tiene registrado, Pinza abre igual y la línea queda a cargo del
+            // despliegue por borde (BRIEF §3: la app vive en la bandeja; no
+            // hay nada que abortar por un atajo ocupado).
+            if let Err(error) =
+                app.global_shortcut()
+                    .on_shortcut("ctrl+alt+t", |app, _shortcut, event| {
+                        if event.state() == ShortcutState::Pressed {
+                            app.state::<RevealControl>().request_toggle();
+                        }
+                    })
+            {
+                log::error!("el atajo global Ctrl+Alt+T no se pudo registrar: {error}");
+            }
             serve_thumbnails_scope(app.handle());
             setup_watcher(app.handle());
             spawn_reveal_loop(app.handle().clone());
