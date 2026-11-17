@@ -8,6 +8,89 @@
 
 use std::path::PathBuf;
 
+/// Punto físico en coordenadas de pantalla.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CursorPoint {
+    pub x: i32,
+    pub y: i32,
+}
+
+/// Posición actual del cursor en coordenadas físicas de pantalla.
+#[cfg(windows)]
+pub fn cursor_position() -> Result<CursorPoint, String> {
+    use windows::Win32::Foundation::POINT;
+    use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
+
+    let mut point = POINT::default();
+    // SAFETY: GetCursorPos solo escribe sobre el POINT del llamante y no
+    // guarda estado; no hay invariante adicional.
+    // <https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-getcursorpos>
+    let result = unsafe { GetCursorPos(&mut point) };
+    result
+        .map_err(|error| format!("no se pudo leer la posición del cursor: {error}"))
+        .map(|_| CursorPoint {
+            x: point.x,
+            y: point.y,
+        })
+}
+
+#[cfg(not(windows))]
+pub fn cursor_position() -> Result<CursorPoint, String> {
+    Err("Pinza solo lee el cursor en Windows".to_string())
+}
+
+/// `true` si la ventana en primer plano cubre todo el monitor primario
+/// (juego, vídeo o presentación a pantalla completa).
+#[cfg(windows)]
+pub fn fullscreen_app_active() -> bool {
+    use windows::Win32::Foundation::RECT;
+    use windows::Win32::Graphics::Gdi::{
+        GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTOPRIMARY,
+    };
+    use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowRect};
+
+    // SAFETY: las tres funciones solo consultan estado del sistema; los
+    // handles devueltos no requieren liberación y los RECT son del llamante.
+    // <https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-getforegroundwindow>
+    let foreground = unsafe { GetForegroundWindow() };
+    if foreground.is_invalid() {
+        return false;
+    }
+
+    let mut window_rect = RECT::default();
+    // SAFETY: GetWindowRect escribe sobre el RECT del llamante con un handle
+    // de ventana válido; no hay invariante adicional.
+    // <https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-getwindowrect>
+    if unsafe { GetWindowRect(foreground, &mut window_rect) }.is_err() {
+        return false;
+    }
+    let monitor = unsafe { MonitorFromWindow(foreground, MONITOR_DEFAULTTOPRIMARY) };
+    if monitor.is_invalid() {
+        return false;
+    }
+    // SAFETY: GetMonitorInfoW escribe sobre la estructura del llamante; el
+    // campo cbSize debe estar inicializado antes de la llamada.
+    // <https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-getmonitorinfo>
+    let mut info = MONITORINFO {
+        cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+        ..Default::default()
+    };
+    if unsafe { GetMonitorInfoW(monitor, &mut info) }.as_bool() {
+        let m = info.rcMonitor;
+        window_rect.left <= m.left
+            && window_rect.top <= m.top
+            && window_rect.right >= m.right
+            && window_rect.bottom >= m.bottom
+    } else {
+        false
+    }
+}
+
+#[cfg(not(windows))]
+pub fn fullscreen_app_active() -> bool {
+    false
+}
+
 /// Carpeta que Pinza vigila: el valor de `PINZA_WATCH_DIR` si lo trae el
 /// entorno, y si no, la carpeta conocida de capturas de pantalla de Windows.
 pub fn resolve_watch_folder(env_override: Option<&str>) -> Result<PathBuf, String> {
