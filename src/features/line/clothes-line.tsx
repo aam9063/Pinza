@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { motion } from "motion/react";
 
-import { onLineHidden, onLineShown, setLineInteractive } from "@/shared/ipc";
+import { onLineHidden, onLineShown, setThumbnailRects, type ThumbRect } from "@/shared/ipc";
 import { logger } from "@/shared/log/logger";
 import { lineHidden, slideDown } from "@/shared/motion/presets";
 
@@ -17,7 +17,7 @@ import { useShelf } from "./use-shelf";
 export function ClothesLine() {
   const entries = useShelf();
   const newestId = entries[0]?.id;
-  const interactive = useRef(false);
+  const navRef = useRef<HTMLElement | null>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -31,23 +31,42 @@ export function ClothesLine() {
     };
   }, []);
 
-  const handlePointerMove = (event: React.PointerEvent<HTMLElement>) => {
-    const overThumbnail = (event.target as HTMLElement).closest("[data-testid^='thumbnail-']");
-    const next = overThumbnail !== null;
-    if (interactive.current === next) return;
-    interactive.current = next;
-    void setLineInteractive(next);
-  };
+  // El shell alterna el click-through sobre estos rectángulos: mientras la
+  // ventana ignora el ratón la web no recibe eventos de puntero, así que
+  // Rust decide a partir de los rects físicos que publicamos aquí.
+  useEffect(() => {
+    const publish = () => {
+      const scale = window.devicePixelRatio || 1;
+      const rects: ThumbRect[] = [
+        ...(navRef.current?.querySelectorAll("[data-testid^='thumbnail-']") ?? []),
+      ].map((thumb) => {
+        const r = thumb.getBoundingClientRect();
+        return { x: r.x * scale, y: r.y * scale, width: r.width * scale, height: r.height * scale };
+      });
+      void setThumbnailRects(rects).catch((error) =>
+        logger.error("no se pudieron publicar los rectángulos de las miniaturas", error),
+      );
+    };
+    // Los rects solo valen con la línea desplegada: oculta, el contenedor
+    // vive en translateY(-100%) y las medidas son de la posición escondida.
+    if (!visible) return undefined;
+    const settle = setTimeout(publish, 600);
+    window.addEventListener("resize", publish);
+    return () => {
+      clearTimeout(settle);
+      window.removeEventListener("resize", publish);
+    };
+  }, [entries, visible]);
 
   return (
     <motion.nav
+      ref={navRef}
       data-testid="clothes-line"
       className="flex h-full w-full items-start overflow-hidden"
       variants={lineHidden}
       initial="hidden"
       animate={visible ? "visible" : "hidden"}
       transition={slideDown}
-      onPointerMove={handlePointerMove}
     >
       <div className="mx-4 mt-3 h-0.5 flex-1 rounded bg-ink/30" aria-hidden />
       <AnimatePresence initial={false}>

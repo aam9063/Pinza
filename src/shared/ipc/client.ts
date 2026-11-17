@@ -21,6 +21,24 @@ export function listenEvent<T>(event: string, handler: (payload: T) => void): Pr
   return listen<T>(event, (message) => handler(message.payload));
 }
 
+/**
+ * Starts the native drag of a file with the drag plugin. The plugin command
+ * takes a Tauri Channel for its events; Pinza ignores drag completion events,
+ * so the channel is bound to a no-op listener (an unbound channel can drop
+ * events or warn at runtime).
+ */
+export async function startFileDrag(path: string): Promise<void> {
+  const { Channel } = await import("@tauri-apps/api/core");
+  const onEvent = new Channel<unknown>();
+  onEvent.onmessage = () => undefined;
+  await invoke("plugin:drag|start_drag", {
+    item: { files: [path] },
+    image: { raw: [] },
+    options: {},
+    onEvent,
+  });
+}
+
 /** Turns a filesystem path into an asset-protocol URL served by the shell. */
 export function assetUrl(filePath: string): string {
   return convertFileSrc(filePath);

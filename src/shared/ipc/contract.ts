@@ -9,6 +9,19 @@ export interface AppInfo {
   readonly tauriVersion: string;
 }
 
+/** Physical-pixel rectangle of a thumbnail inside the line strip. */
+export interface ThumbRect {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/** The file an operation acted on, so the web can show feedback. */
+export interface FileOutcome {
+  readonly path: string;
+}
+
 /** A screenshot hanging on the line; the file always stays on disk. */
 export interface ShelfEntry {
   readonly id: number;
@@ -31,7 +44,10 @@ export interface CommandMap {
     readonly result: readonly ShelfEntry[];
   };
   readonly pause_watching: { readonly args: Record<string, never>; readonly result: null };
-  readonly set_line_interactive: { readonly args: { readonly interactive: boolean }; readonly result: null };
+  readonly set_thumbnail_rects: { readonly args: { readonly thumbnails: ThumbRect[] }; readonly result: null };
+  readonly copy_image: { readonly args: { readonly path: string }; readonly result: FileOutcome };
+  readonly open_file: { readonly args: { readonly path: string }; readonly result: FileOutcome };
+  readonly trash_file: { readonly args: { readonly path: string }; readonly result: FileOutcome };
   readonly resume_watching: { readonly args: Record<string, never>; readonly result: null };
 }
 

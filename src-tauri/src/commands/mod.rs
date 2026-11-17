@@ -1,6 +1,7 @@
 //! Comandos expuestos a la web, uno por fichero.
 
 pub mod app_info;
+pub mod file_ops;
 pub mod get_shelf;
 pub mod line;
 pub mod open_window;

@@ -19,6 +19,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
+use commands::line::ThumbRect;
 use commands::LINE_HIDE_EVENT;
 use commands::LINE_SHOW_EVENT;
 use reveal::{Action, RevealControl, RevealMachine, Tick};
@@ -48,7 +49,11 @@ pub fn run() {
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(ShortcutBuilder::new().build())
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_drag::init())
         .manage(Mutex::new(Shelf::default()))
+        .manage(Mutex::new(Vec::<ThumbRect>::new()))
         .manage(RevealControl::default())
         .manage(WatchControl::default())
         .invoke_handler(tauri::generate_handler![
@@ -57,7 +62,10 @@ pub fn run() {
             commands::get_shelf::get_shelf,
             commands::watching::pause_watching,
             commands::watching::resume_watching,
-            commands::line::set_line_interactive,
+            commands::line::set_thumbnail_rects,
+            commands::file_ops::copy_image,
+            commands::file_ops::open_file,
+            commands::file_ops::trash_file,
         ])
         .setup(|app| {
             windows_mgr::attach_line_to_primary_monitor(app.handle())?;
@@ -109,6 +117,7 @@ fn spawn_reveal_loop(app: AppHandle) {
     std::thread::spawn(move || {
         let mut machine = RevealMachine::new();
         let mut last_cursor_error: Option<Instant> = None;
+        let mut last_interactive = false;
         loop {
             let now = Instant::now();
             let cursor = platform::windows::cursor_position();
@@ -121,6 +130,7 @@ fn spawn_reveal_loop(app: AppHandle) {
                     last_cursor_error = Some(Instant::now());
                 }
             }
+            let cursor_x = cursor.as_ref().ok().map(|point| point.x);
             let cursor_y = cursor.as_ref().ok().map(|point| point.y);
             let cursor_in_edge_zone = cursor_y.is_some_and(|y| y <= reveal::EDGE_ZONE_PX);
             // La detección de pantalla completa hace tres llamadas Win32 por
@@ -149,6 +159,26 @@ fn spawn_reveal_loop(app: AppHandle) {
                 Action::Show => emit_line_event(&app, LINE_SHOW_EVENT, "desplegar"),
                 Action::Hide => emit_line_event(&app, LINE_HIDE_EVENT, "ocultar"),
                 Action::Nothing => {}
+            }
+
+            // Click-through por zona: el ratón solo llega a la web sobre una
+            // miniatura; en el resto de la franja los clics pasan a la app de
+            // debajo (BRIEF §5.4). Se aplica solo al cambiar para no martillear.
+            let interactive = machine.is_shown()
+                && tick.cursor_in_strip
+                && cursor_y.zip(cursor_x).is_some_and(|(y, x)| {
+                    app.state::<Mutex<Vec<ThumbRect>>>()
+                        .lock()
+                        .map(|rects| rects.iter().any(|rect| rect.contains(x, y)))
+                        .unwrap_or(false)
+                });
+            if interactive != last_interactive {
+                if let Some(window) = app.get_webview_window(windows_mgr::LINE_LABEL) {
+                    if let Err(error) = window.set_ignore_cursor_events(!interactive) {
+                        log::error!("no se pudo cambiar el click-through de la línea: {error}");
+                    }
+                }
+                last_interactive = interactive;
             }
 
             // Sondeo adaptativo: fino solo cuando importa (cursor cerca del

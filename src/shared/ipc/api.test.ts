@@ -2,10 +2,15 @@ import { describe, expect, it, vi } from "vitest";
 
 const invoke = vi.fn();
 const listen = vi.fn();
-vi.mock("@tauri-apps/api/core", () => ({ invoke }));
+vi.mock("@tauri-apps/api/core", () => {
+  class Channel {
+    onmessage: ((message: unknown) => void) | null = null;
+  }
+  return { invoke, Channel };
+});
 vi.mock("@tauri-apps/api/event", () => ({ listen }));
 
-const { getAppInfo, getShelf, onLineHidden, onLineShown, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching, setLineInteractive } =
+const { copyImage, getAppInfo, getShelf, onLineHidden, onLineShown, openFile, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching, setThumbnailRects, startDrag, trashFile } =
   await import("./api");
 
 describe("typed ipc layer", () => {
@@ -48,11 +53,12 @@ describe("typed ipc layer", () => {
     expect(invoke).toHaveBeenCalledWith("resume_watching", {});
   });
 
-  it("routes set_line_interactive with its boolean flag", async () => {
+  it("routes set_thumbnail_rects with the physical rectangles", async () => {
     invoke.mockResolvedValueOnce(null);
+    const rects = [{ x: 0, y: 0, width: 160, height: 96 }];
 
-    await expect(setLineInteractive(true)).resolves.toBeNull();
-    expect(invoke).toHaveBeenCalledWith("set_line_interactive", { interactive: true });
+    await expect(setThumbnailRects(rects)).resolves.toBeNull();
+    expect(invoke).toHaveBeenCalledWith("set_thumbnail_rects", { thumbnails: rects });
   });
 
   it.each([
@@ -70,6 +76,22 @@ describe("typed ipc layer", () => {
     expect(listen).toHaveBeenCalledWith(event, expect.any(Function));
     expect(handler).toHaveBeenCalledWith(undefined);
     expect(unsubscribe).toBe(unlisten);
+  });
+
+  it.each([
+    ["copy_image", copyImage],
+    ["open_file", openFile],
+    ["trash_file", trashFile],
+  ])("routes %s with the screenshot path", async (command, call) => {
+    const outcome = { path: "C:/capturas/a.png" };
+    invoke.mockResolvedValueOnce(outcome);
+
+    await expect(call("C:/capturas/a.png")).resolves.toEqual(outcome);
+    expect(invoke).toHaveBeenCalledWith(command, { path: "C:/capturas/a.png" });
+  });
+
+  it("startDrag resolves with the dragged path after the plugin call", async () => {
+    await expect(startDrag("C:/capturas/a.png")).resolves.toEqual({ path: "C:/capturas/a.png" });
   });
 
   it("subscribes to screenshot:added and returns its payload to the handler", async () => {
