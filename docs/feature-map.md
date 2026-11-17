@@ -1,69 +1,88 @@
 # Feature Map: Pinza
 
-> Seeded before any code exists. Every entry marked **(planned)** must be replaced with real paths, selectors and commands when its milestone lands (see `AGENTS.md` section 3).
-> Milestones and flows: `BRIEF.md`. Reference screens: `docs/design/`.
+> Sembrado antes de que existiera código. Cada entrada marcada **(prevista)** se sustituye por rutas, selectores y comandos reales cuando llega su hito (ver `AGENTS.md` sección 3).
+> Hitos y flujos: `BRIEF.md`. Pantallas de referencia: `docs/design/`.
+> Las entradas de M0 son reales; el resto siguen siendo previstas.
 
-## Line (planned, M1)
-- What it is (user point of view): a clothesline at the top of the screen where every new screenshot hangs as a thumbnail.
-- Sub-features: reveal on top-edge hover, reveal on shortcut, auto-hide, drop-in animation for new screenshots, "New" badge, max thumbnails with unhang of the oldest, hide in fullscreen.
-- How to reach it in the UI: take a screenshot (Win + Print Screen), or move the cursor to the top edge, or press Ctrl + Alt + T.
-- Keyboard shortcuts: Ctrl + Alt + T (configurable).
-- Selectors for programmatic control: `line-root`, `line-thumb-<id>`, `line-thumb-new-badge` (planned).
-- Code location: `src/features/line/`, `src/app/line/page.tsx`, `src-tauri/src/shelf/`, `src-tauri/src/windows_mgr/`, `src-tauri/src/platform/windows/` (fullscreen, cursor).
-- Backend/API involved: events `screenshot:added`, `screenshot:removed`, `line:show`, `line:hide`; command `get_shelf` (planned).
-- Known pitfalls: click-through must stay on outside thumbnails; transparent window must not steal focus; DPI scaling per monitor.
+## Shell, ventanas y andamiaje (M0, real)
+
+- What it is (user point of view): Pinza abre una franja transparente en el borde superior y tres ventanas normales que se abren solo cuando se piden.
+- Sub-features: ventana `line` siempre visible y estirada al ancho del monitor principal; `editor`, `settings` y `onboarding` creadas bajo demanda y destruidas al cerrarse; capa IPC tipada; export estático con las cuatro rutas.
+- How to reach it in the UI: `pnpm dev:debug` abre la línea; las demás ventanas se abren con el comando `open_window` (menú de bandeja en M4, gestos en M2 y M3).
+- Keyboard shortcuts: ninguno todavía (el atajo global llega con M1).
+- Selectors for programmatic control: `line-root`, `editor-root`, `settings-root`, `onboarding-root` (todos con `data-window` igual al nombre de la ventana).
+- Code location: `src/app/{line,editor,settings,onboarding}/page.tsx`, `src/shared/ui/window-shell.tsx`, `src/shared/motion/presets.ts`, `src/shared/ipc/`, `src-tauri/src/windows_mgr/mod.rs`, `src-tauri/src/commands/`.
+- Backend/API involved: comandos `app_info` y `open_window`; sin eventos todavía.
+- Known pitfalls: las rutas se generan con `trailingSlash`, así que las URLs llevan barra final (`/line/`); `open_window` rechaza `line`; el editor, los ajustes y el onboarding no existen hasta que se piden; la verificación por CDP necesita `pnpm dev:debug`. Sin toolchain de Rust, `pnpm verify:export` es la única prueba ejecutable del export.
 - Design: `docs/design/01-linea-desplegada.png`.
 
-## Screenshot watcher (planned, M1)
-- What it is (user point of view): Pinza notices new screenshots on its own.
-- Sub-features: known-folder detection, custom folder, debounce until the PNG is fully written, pause watching.
-- How to reach it in the UI: no UI; configured in Settings > Capturas and in onboarding step 1.
-- Keyboard shortcuts: none.
-- Selectors for programmatic control: none (drive it with `pnpm seed:screenshots`).
-- Code location: `src-tauri/src/watcher/`, `src-tauri/src/thumbnails/`.
-- Backend/API involved: emits `screenshot:added`; commands `pause_watching`, `resume_watching` (planned).
-- Known pitfalls: Snipping Tool may write in several steps; the folder may be redirected (OneDrive); never watch the real folder in tests.
+## Línea (prevista, M1)
 
-## Thumbnail gestures (planned, M2)
-- What it is (user point of view): act on a screenshot directly from the line.
-- Sub-features: hover action bar, click to copy, hold 0.4 s to annotate, double-click to open in the default viewer, drag out to Explorer or another app, move to Recycle Bin.
-- How to reach it in the UI: reveal the line and hover or click a thumbnail.
-- Keyboard shortcuts: none.
-- Selectors for programmatic control: `thumb-action-copy`, `thumb-action-annotate`, `thumb-action-open`, `thumb-action-trash`, `thumb-hold-ring` (planned).
-- Code location: `src/features/line/gestures/`, `src-tauri/src/commands/` (`copy_image`, `open_file`, `trash_file`, `start_drag`).
-- Backend/API involved: `tauri-plugin-clipboard-manager`, `tauri-plugin-opener`, `tauri-plugin-drag`, crate `trash`.
-- Known pitfalls: native drag-out cannot be verified over CDP alone, use `pnpm verify:native`; click vs double-click vs hold must not trigger each other.
-- Design: `docs/design/02-gestos.png`.
+- Qué es (punto de vista del usuario): una cuerda en el borde superior de la pantalla donde cada captura nueva cuelga como miniatura.
+- Sub-features: despliegue al rozar el borde, despliegue por atajo, ocultarse sola, animación de caída al colgar, etiqueta "Nueva", máximo de miniaturas con descolgado de la más antigua, ocultarse en pantalla completa.
+- Cómo se llega: haciendo una captura (Win + Impr Pant), llevando el cursor al borde superior o pulsando Ctrl + Alt + T.
+- Atajos: Ctrl + Alt + T (configurable).
+- Selectores para control programático: `line-root`, `line-thumb-<id>`, `line-thumb-new-badge` (previstos).
+- Ubicación del código: `src/features/line/`, `src/app/line/page.tsx`, `src-tauri/src/shelf/`, `src-tauri/src/windows_mgr/`, `src-tauri/src/platform/windows/` (pantalla completa, cursor).
+- Backend/API: eventos `screenshot:added`, `screenshot:removed`, `line:show`, `line:hide`; comando `get_shelf` (previstos).
+- Trampas conocidas: el clic debe atravesar la ventana fuera de las miniaturas; la ventana transparente no debe robar el foco; escalado DPI por monitor.
+- Diseño: `docs/design/01-linea-desplegada.png`.
 
-## Annotation editor (planned, M3)
-- What it is (user point of view): draw on a screenshot and save an annotated copy.
-- Sub-features: select/move, pen, highlighter, arrow, line, rectangle, ellipse, text, numbered steps, pixelate/blur, crop, edit objects after drawing, undo/redo, zoom and pan, copy, save and close.
-- How to reach it in the UI: hold a thumbnail for 0.4 s or click the pencil in its action bar.
-- Keyboard shortcuts: V, P, H, A, L, R, E, T, N, B, C for tools; Ctrl+Z / Ctrl+Y; Ctrl+C; Ctrl+S; Ctrl + wheel; Ctrl+0; Delete; Ctrl+D.
-- Selectors for programmatic control: `editor-tool-<name>`, `editor-color-<n>`, `editor-stroke`, `editor-undo`, `editor-copy`, `editor-save`, `editor-canvas` (planned).
-- Code location: `src/features/annotate/`, `src/app/editor/page.tsx`, `src-tauri/src/commands/` (`save_annotated`).
-- Backend/API involved: command `save_annotated` (planned), emits `screenshot:added` for the copy.
-- Known pitfalls: export at the original resolution, not screen size; the original file must keep the same hash.
-- Design: `docs/design/03-anotar.png`.
+## Vigilante de capturas (prevista, M1)
 
-## Settings and tray (planned, M4)
-- What it is (user point of view): configure Pinza and control it from the system tray.
-- Sub-features: start with Windows, shortcut, watched folder, Recycle Bin vs permanent delete, reveal mode, visible time, max thumbnails, hide in fullscreen, tray menu (show/hide, open folder, pause, settings, quit), language.
-- How to reach it in the UI: tray icon > Ajustes…
-- Keyboard shortcuts: none of its own.
-- Selectors for programmatic control: `settings-<key>` per row (planned).
-- Code location: `src/features/settings/`, `src/app/settings/page.tsx`, `src-tauri/src/settings/`, `src-tauri/src/tray/`.
-- Backend/API involved: `tauri-plugin-store`, `tauri-plugin-autostart`, `tauri-plugin-global-shortcut`; event `settings:changed` (planned).
-- Known pitfalls: shortcut conflicts with other apps; tray menu is native, verify with `pnpm verify:native`.
-- Design: `docs/design/04-ajustes-y-bandeja.png`.
+- Qué es (punto de vista del usuario): Pinza se da cuenta sola de las capturas nuevas.
+- Sub-features: detección de la carpeta conocida de Windows, carpeta propia, espera a que el PNG termine de escribirse, pausar la vigilancia.
+- Cómo se llega: no hay interfaz; se configura en Ajustes > Capturas y en el paso 1 del asistente.
+- Atajos: ninguno.
+- Selectores para control programático: ninguno (se dirige con `pnpm seed:screenshots`).
+- Ubicación del código: `src-tauri/src/watcher/`, `src-tauri/src/thumbnails/`.
+- Backend/API: emite `screenshot:added`; comandos `pause_watching`, `resume_watching` (previstos).
+- Trampas conocidas: el Recortes puede escribir en varios pasos; la carpeta puede estar redirigida (OneDrive); nunca vigilar la carpeta real en las pruebas.
 
-## Onboarding (planned, M5)
-- What it is (user point of view): a 3-step first-run wizard.
-- Sub-features: screenshots folder, shortcut, start with Windows.
-- How to reach it in the UI: first launch after install (or with an empty `PINZA_DATA_DIR`).
-- Keyboard shortcuts: Enter for next, Esc for back.
-- Selectors for programmatic control: `onboarding-step-<n>`, `onboarding-next`, `onboarding-back` (planned).
-- Code location: `src/features/onboarding/`, `src/app/onboarding/page.tsx`.
-- Backend/API involved: commands `get_default_screenshots_dir`, `complete_onboarding` (planned).
-- Known pitfalls: must end with watching active and the onboarding window destroyed.
-- Design: `docs/design/05-primer-arranque.png`.
+## Gestos sobre miniaturas (prevista, M2)
+
+- Qué es (punto de vista del usuario): actuar sobre una captura directamente desde la línea.
+- Sub-features: barra de acciones al pasar el ratón, clic para copiar, mantener 0,4 s para anotar, doble clic para abrir con el visor predeterminado, arrastrar fuera a una carpeta o a otra app, mover a la Papelera de reciclaje.
+- Cómo se llega: desplegar la línea y pasar el ratón o hacer clic en una miniatura.
+- Atajos: ninguno.
+- Selectores para control programático: `thumb-action-copy`, `thumb-action-annotate`, `thumb-action-open`, `thumb-action-trash`, `thumb-hold-ring` (previstos).
+- Ubicación del código: `src/features/line/gestures/`, `src-tauri/src/commands/` (`copy_image`, `open_file`, `trash_file`, `start_drag`).
+- Backend/API: `tauri-plugin-clipboard-manager`, `tauri-plugin-opener`, `tauri-plugin-drag`, crate `trash`.
+- Trampas conocidas: el arrastre nativo no se puede verificar solo por CDP, hace falta `pnpm verify:native`; clic, doble clic y mantener pulsado no deben dispararse entre sí.
+- Diseño: `docs/design/02-gestos.png`.
+
+## Editor de anotaciones (prevista, M3)
+
+- Qué es (punto de vista del usuario): dibujar sobre una captura y guardar una copia anotada.
+- Sub-features: seleccionar y mover, lápiz, resaltador, flecha, línea, rectángulo, elipse, texto, numeración de pasos, pixelar o difuminar, recortar, editar objetos después de dibujarlos, deshacer y rehacer, zoom y desplazamiento, copiar, guardar y cerrar.
+- Cómo se llega: mantener una miniatura 0,4 s o pulsar el lápiz de su barra de acciones.
+- Atajos: V, P, H, A, L, R, E, T, N, B, C para las herramientas; Ctrl+Z y Ctrl+Y; Ctrl+C; Ctrl+S; Ctrl + rueda; Ctrl+0; Supr; Ctrl+D.
+- Selectores para control programático: `editor-tool-<name>`, `editor-color-<n>`, `editor-stroke`, `editor-undo`, `editor-copy`, `editor-save`, `editor-canvas` (previstos).
+- Ubicación del código: `src/features/annotate/`, `src/app/editor/page.tsx`, `src-tauri/src/commands/` (`save_annotated`).
+- Backend/API: comando `save_annotated` (previsto), emite `screenshot:added` para la copia.
+- Trampas conocidas: exportar a la resolución original, no a la de pantalla; el fichero original debe conservar el mismo hash.
+- Diseño: `docs/design/03-anotar.png`.
+
+## Ajustes y bandeja (prevista, M4)
+
+- Qué es (punto de vista del usuario): configurar Pinza y controlarla desde la bandeja del sistema.
+- Sub-features: iniciar con Windows, atajo, carpeta vigilada, papelera frente a borrado definitivo, modo de despliegue, tiempo visible, máximo de miniaturas, ocultar en pantalla completa, menú de la bandeja (mostrar u ocultar, abrir carpeta, pausar, ajustes, salir) e idioma.
+- Cómo se llega: icono de la bandeja > Ajustes…
+- Atajos: ninguno propio.
+- Selectores para control programático: `settings-<key>`, uno por fila (previstos).
+- Ubicación del código: `src/features/settings/`, `src/app/settings/page.tsx`, `src-tauri/src/settings/`, `src-tauri/src/tray/`.
+- Backend/API: `tauri-plugin-store`, `tauri-plugin-autostart`, `tauri-plugin-global-shortcut`; evento `settings:changed` (previstos).
+- Trampas conocidas: el atajo puede chocar con otras aplicaciones; el menú de la bandeja es nativo, se verifica con `pnpm verify:native`.
+- Diseño: `docs/design/04-ajustes-y-bandeja.png`.
+
+## Primer arranque (prevista, M5)
+
+- Qué es (punto de vista del usuario): un asistente de tres pasos la primera vez.
+- Sub-features: carpeta de capturas, atajo de teclado, iniciar con Windows.
+- Cómo se llega: primer arranque tras la instalación (o con `PINZA_DATA_DIR` vacío).
+- Atajos: Intro para avanzar, Esc para volver.
+- Selectores para control programático: `onboarding-step-<n>`, `onboarding-next`, `onboarding-back` (previstos).
+- Ubicación del código: `src/features/onboarding/`, `src/app/onboarding/page.tsx`.
+- Backend/API: comandos `get_default_screenshots_dir`, `complete_onboarding` (previstos).
+- Trampas conocidas: debe terminar con la vigilancia activa y la ventana del asistente destruida.
+- Diseño: `docs/design/05-primer-arranque.png`.
