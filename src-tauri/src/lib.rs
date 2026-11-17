@@ -48,6 +48,9 @@ pub fn run() {
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(ShortcutBuilder::new().build())
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_drag::init())
         .manage(Mutex::new(Shelf::default()))
         .manage(RevealControl::default())
         .manage(WatchControl::default())
@@ -58,6 +61,9 @@ pub fn run() {
             commands::watching::pause_watching,
             commands::watching::resume_watching,
             commands::line::set_line_interactive,
+            commands::file_ops::copy_image,
+            commands::file_ops::open_file,
+            commands::file_ops::trash_file,
         ])
         .setup(|app| {
             windows_mgr::attach_line_to_primary_monitor(app.handle())?;
