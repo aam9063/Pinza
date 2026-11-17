@@ -86,23 +86,49 @@ pub fn run() {
     }
 }
 
-const REVEAL_POLL: Duration = Duration::from_millis(50);
+const REVEAL_POLL_ACTIVE: Duration = Duration::from_millis(50);
+/// Sondeo en reposo: sin cursor cerca del borde ni línea visible, la única
+/// llamada por tick es GetCursorPos (barata); 120 ms mantienen el despliegue
+/// ágil con la CPU en reposo (BRIEF §4: ~0 % con la línea oculta).
+const REVEAL_POLL_IDLE: Duration = Duration::from_millis(120);
 
 /// Sondea el cursor y la pantalla completa y decide si la línea se muestra
 /// u oculta. La franja siempre existe como ventana transparente: mostrar y
-/// ocultar son solo eventos hacia la web, que anima la cuerda.
+/// ocultar son solo eventos hacia la web, que anima la cuerda. El intervalo
+/// es corto solo cuando importa (cursor cerca del borde o línea visible) y
+/// largo en reposo. Los fallos de cursor se registran como máximo una vez
+/// cada 5 s para no inundar el log.
 fn spawn_reveal_loop(app: AppHandle) {
     std::thread::spawn(move || {
         let mut machine = RevealMachine::new();
+        let mut last_cursor_error: Option<Instant> = None;
         loop {
-            std::thread::sleep(REVEAL_POLL);
             let now = Instant::now();
-            let cursor = platform::windows::cursor_position().ok();
-            let cursor_y = cursor.as_ref().map(|point| point.y);
+            let cursor = platform::windows::cursor_position();
+            if let Err(error) = &cursor {
+                if last_cursor_error
+                    .map(|last| last.elapsed() >= Duration::from_secs(5))
+                    .unwrap_or(true)
+                {
+                    log::error!("no se pudo leer la posición del cursor: {error}");
+                    last_cursor_error = Some(Instant::now());
+                }
+            }
+            let cursor_y = cursor.as_ref().ok().map(|point| point.y);
+            let cursor_in_edge_zone = cursor_y.is_some_and(|y| y <= reveal::EDGE_ZONE_PX);
+            // La detección de pantalla completa hace tres llamadas Win32 por
+            // tick: solo se consulta cuando su resultado puede cambiar algo
+            // (línea visible o cursor en la zona del borde).
+            let need_fullscreen_check = machine.is_shown() || cursor_in_edge_zone;
+            let fullscreen = if need_fullscreen_check {
+                platform::windows::fullscreen_app_active()
+            } else {
+                false
+            };
             let tick = Tick {
-                cursor_in_edge_zone: cursor_y.is_some_and(|y| y <= reveal::EDGE_ZONE_PX),
+                cursor_in_edge_zone,
                 cursor_in_strip: cursor_y.is_some_and(|y| y <= windows_mgr::LINE_HEIGHT as i32),
-                fullscreen: platform::windows::fullscreen_app_active(),
+                fullscreen,
                 now,
             };
 
@@ -117,6 +143,17 @@ fn spawn_reveal_loop(app: AppHandle) {
                 Action::Hide => emit_line_event(&app, LINE_HIDE_EVENT, "ocultar"),
                 Action::Nothing => {}
             }
+
+            // Sondeo adaptativo: fino solo cuando importa (cursor cerca del
+            // borde o línea visible); en reposo 120 ms bastan y la CPU cae a
+            // ~0 % (BRIEF §4).
+            let cursor_near_edge = cursor_y.is_some_and(|y| y <= reveal::EDGE_ZONE_PX);
+            let sleep_for = if machine.is_shown() || cursor_near_edge {
+                REVEAL_POLL_ACTIVE
+            } else {
+                REVEAL_POLL_IDLE
+            };
+            std::thread::sleep(sleep_for);
         }
     });
 }
