@@ -1,4 +1,10 @@
 //! Comandos expuestos a la web, uno por fichero.
 
 pub mod app_info;
+pub mod get_shelf;
 pub mod open_window;
+pub mod watching;
+
+/// Eventos que el shell emite hacia la web cuando la línea cambia.
+pub const SCREENSHOT_ADDED_EVENT: &str = "screenshot:added";
+pub const SCREENSHOT_REMOVED_EVENT: &str = "screenshot:removed";

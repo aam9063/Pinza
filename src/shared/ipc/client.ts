@@ -8,6 +8,8 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 import type { CommandMap } from "./contract";
 
+export type Unlisten = UnlistenFn;
+
 export function invokeCommand<K extends keyof CommandMap>(
   command: K,
   args: CommandMap[K]["args"],
