@@ -38,3 +38,6 @@ export interface CommandMap {
 /** Events the Rust shell emits when the line changes. */
 export const SCREENSHOT_ADDED_EVENT = "screenshot:added";
 export const SCREENSHOT_REMOVED_EVENT = "screenshot:removed";
+/** The line reveals itself (edge dwell or global shortcut) and hides again. */
+export const LINE_SHOW_EVENT = "line:show";
+export const LINE_HIDE_EVENT = "line:hide";
