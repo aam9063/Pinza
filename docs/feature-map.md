@@ -28,15 +28,15 @@
 - Trampas conocidas: el clic debe atravesar la ventana fuera de las miniaturas; la ventana transparente no debe robar el foco; escalado DPI por monitor.
 - Diseño: `docs/design/01-linea-desplegada.png`.
 
-## Vigilante de capturas (prevista, M1)
+## Vigilante de capturas (M1a real; miniaturas quedan para M1b)
 
 - Qué es (punto de vista del usuario): Pinza se da cuenta sola de las capturas nuevas.
-- Sub-features: detección de la carpeta conocida de Windows, carpeta propia, espera a que el PNG termine de escribirse, pausar la vigilancia.
+- Sub-features: detección de la carpeta conocida de Windows, carpeta propia, espera a que el PNG termine de escribirse, pausar la vigilancia, lista de capturas colgadas con tope de 10 (la más antigua se descuelga sin borrar el fichero).
 - Cómo se llega: no hay interfaz; se configura en Ajustes > Capturas y en el paso 1 del asistente.
 - Atajos: ninguno.
 - Selectores para control programático: ninguno (se dirige con `pnpm seed:screenshots`).
-- Ubicación del código: `src-tauri/src/watcher/`, `src-tauri/src/thumbnails/`.
-- Backend/API: emite `screenshot:added`; comandos `pause_watching`, `resume_watching` (previstos).
+- Ubicación del código: `src-tauri/src/watcher/`, `src-tauri/src/shelf/`, `src-tauri/src/commands/get_shelf.rs`, `src-tauri/src/commands/watching.rs`.
+- Backend/API: emite `screenshot:added` y `screenshot:removed`; comandos `get_shelf`, `pause_watching`, `resume_watching`.
 - Trampas conocidas: el Recortes puede escribir en varios pasos; la carpeta puede estar redirigida (OneDrive); nunca vigilar la carpeta real en las pruebas.
 
 ## Gestos sobre miniaturas (prevista, M2)
