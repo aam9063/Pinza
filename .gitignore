@@ -1,0 +1,30 @@
+# Node / pnpm
+node_modules/
+.pnpm-store/
+*.log
+npm-debug.log*
+
+# Next.js (static export)
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Tauri / Rust
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# Tests and verification artifacts
+coverage/
+e2e/test-results/
+e2e/playwright-report/
+.verify/
+
+# Env and editor noise
+.env
+.env.local
+.vscode/*
+!.vscode/extensions.json
+.idea/
+Thumbs.db
+Desktop.ini
