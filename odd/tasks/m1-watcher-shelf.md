@@ -49,3 +49,5 @@
 ## Log
 
 **L1:** «ok procede» → luz verde a arrancar M1 con el troceado propuesto: (1) vigilante y shelf, (2) miniaturas y cola de la línea, (3) despliegue por borde y atajo.
+
+**L2:** T1-T4 implementadas y verificadas tras recuperar la sesión interrumpida. Evidencia: `cargo test` 25/25 verde (shelf, watcher con pausa/reanudación, PNG completo), `pnpm typecheck`, `pnpm lint`, `pnpm test` 17/17 y `pnpm arch` verdes. Commits: cff990e (T1), 48a697c (T2), 97c71fe (T3), 1738638 (T4), 58d791b (verify+doc). Pendiente: empujar a `dev` y abrir PR (decisión de Albert).
