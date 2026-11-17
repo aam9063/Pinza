@@ -52,7 +52,7 @@
 - Trampas conocidas: el arrastre nativo no se puede verificar solo por CDP, hace falta `pnpm verify:native`; clic, doble clic y mantener pulsado no deben dispararse entre sí.
 - Diseño: `docs/design/02-gestos.png`.
 
-## Editor de anotaciones (prevista, M3)
+## Editor de anotaciones (M3a real: lápiz, selección, historial y estilo; resto de herramientas y salida en M3b/M3c)
 
 - Qué es (punto de vista del usuario): dibujar sobre una captura y guardar una copia anotada.
 - Sub-features: seleccionar y mover, lápiz, resaltador, flecha, línea, rectángulo, elipse, texto, numeración de pasos, pixelar o difuminar, recortar, editar objetos después de dibujarlos, deshacer y rehacer, zoom y desplazamiento, copiar, guardar y cerrar.

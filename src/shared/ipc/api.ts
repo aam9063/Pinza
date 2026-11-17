@@ -16,8 +16,13 @@ export function getAppInfo(): Promise<AppInfo> {
   return invokeCommand("app_info", {});
 }
 
-export function openWindow(label: OpenableWindowLabel): Promise<null> {
-  return invokeCommand("open_window", { label });
+export function openWindow(label: OpenableWindowLabel, capturePath?: string): Promise<null> {
+  return invokeCommand("open_window", capturePath ? { label, capturePath } : { label });
+}
+
+/** La captura abierta en el editor, si la hay. */
+export function getEditorCapture(): Promise<string | null> {
+  return invokeCommand("get_editor_capture", {});
 }
 
 /** Capturas colgadas, de la más antigua a la más nueva. */
