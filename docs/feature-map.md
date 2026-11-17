@@ -40,14 +40,14 @@
 - Selectores para control programático: `clothes-line`, `thumbnail-<id>`, `peg-<id>`, `thumb-image-<id>`, `thumb-time-<id>`, `thumb-new-<id>`.
 - Trampas conocidas: el Recortes puede escribir en varios pasos; la carpeta puede estar redirigida (OneDrive); nunca vigilar la carpeta real en las pruebas.
 
-## Gestos sobre miniaturas (prevista, M2)
+## Gestos sobre miniaturas (M2 real; arrastre a Papelera y editor completos quedan para M2b/M3)
 
 - Qué es (punto de vista del usuario): actuar sobre una captura directamente desde la línea.
 - Sub-features: barra de acciones al pasar el ratón, clic para copiar, mantener 0,4 s para anotar, doble clic para abrir con el visor predeterminado, arrastrar fuera a una carpeta o a otra app, mover a la Papelera de reciclaje.
 - Cómo se llega: desplegar la línea y pasar el ratón o hacer clic en una miniatura.
 - Atajos: ninguno.
-- Selectores para control programático: `thumb-action-copy`, `thumb-action-annotate`, `thumb-action-open`, `thumb-action-trash`, `thumb-hold-ring` (previstos).
-- Ubicación del código: `src/features/line/gestures/`, `src-tauri/src/commands/` (`copy_image`, `open_file`, `trash_file`, `start_drag`).
+- Selectores para control programático: `thumb-actions-<id>`, `thumb-action-copy`, `thumb-action-annotate`, `thumb-action-open`, `thumb-action-trash`, `thumb-hold-ring-<id>`, `thumb-copied-<id>`.
+- Ubicación del código: `src/features/line/hanging-thumbnail.tsx` (gestos), `src-tauri/src/commands/file_ops.rs` (`copy_image`, `open_file`, `trash_file`), plugin `drag` invocado desde `src/shared/ipc/client.ts`.
 - Backend/API: `tauri-plugin-clipboard-manager`, `tauri-plugin-opener`, `tauri-plugin-drag`, crate `trash`.
 - Trampas conocidas: el arrastre nativo no se puede verificar solo por CDP, hace falta `pnpm verify:native`; clic, doble clic y mantener pulsado no deben dispararse entre sí.
 - Diseño: `docs/design/02-gestos.png`.
