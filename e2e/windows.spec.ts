@@ -55,6 +55,23 @@ test.afterAll(async () => {
   await browser?.close();
 });
 
+/**
+ * El dev server de Next en Windows puede servir un 500 la primera vez que
+ * varias ventanas compilan a la vez (EPERM al renombrar manifiestos de
+ * `.next/dev`); una recarga lo resuelve. Comportamiento del dev server, no de
+ * la app: en el export estático no existe.
+ */
+async function expectAnchor(page: Page, name: WindowName): Promise<void> {
+  const anchor = page.getByTestId(`${name}-root`);
+
+  try {
+    await expect(anchor).toBeVisible({ timeout: 10_000 });
+  } catch {
+    await page.reload({ waitUntil: "load", timeout: 30_000 });
+    await expect(anchor).toBeVisible({ timeout: 10_000 });
+  }
+}
+
 for (const name of WINDOWS) {
   test(`la ventana ${name} monta su ancla`, async () => {
     const page = name === "line" ? findWindow("line") : await openWindow(name);
@@ -63,6 +80,6 @@ for (const name of WINDOWS) {
       throw new Error(`la ventana ${name} no estaba abierta`);
     }
 
-    await expect(page.getByTestId(`${name}-root`)).toBeVisible();
+    await expectAnchor(page, name);
   });
 }
