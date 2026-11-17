@@ -80,6 +80,8 @@ interface CanvasProps {
   readonly dispatch: (action: EditorAction) => void;
   readonly selectedId: string | null;
   readonly onSelect: (id: string | null) => void;
+  /** Registers the PNG exporter that renders annotations at original resolution. */
+  readonly onExporterReady: (exporter: (() => Promise<Uint8Array>) | null) => void;
 }
 
 interface Draft {
@@ -97,6 +99,7 @@ export function AnnotateCanvas({
   dispatch,
   selectedId,
   onSelect,
+  onExporterReady,
 }: CanvasProps) {
   const [htmlImage, setHtmlImage] = useState<HTMLImageElement | null>(null);
   const [freehand, setFreehand] = useState<readonly number[]>([]);
@@ -347,6 +350,47 @@ export function AnnotateCanvas({
     dispatch({ type: "move", id: annotation.id, dx: node.x(), dy: node.y() });
     node.position({ x: 0, y: 0 });
   };
+
+  // Export: annotations are vector paths; re-render them at original
+  // resolution over an off-screen canvas and encode the PNG. Redact regions
+  // rasterize first so pixels hide the real ones.
+  const exporter = useMemo(() => {
+    if (!htmlImage) return null;
+    const base = state.imageSize.width > 0 ? state.imageSize : naturalSize;
+    return async (): Promise<Uint8Array> => {
+      const canvas = document.createElement("canvas");
+      canvas.width = base.width;
+      canvas.height = base.height;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("no se pudo crear el lienzo de export");
+      context.drawImage(htmlImage, 0, 0, base.width, base.height);
+      const stage = stageRef.current;
+      if (!stage) throw new Error("el lienzo no está montado");
+      // Let the shapes layer draw itself into the export canvas via toCanvas
+      // of a cloned stage at scale 1 (annotations live in image coordinates).
+      const clone = stage.clone();
+      clone.width(base.width);
+      clone.height(base.height);
+      clone.scale({ x: 1, y: 1 });
+      clone.position({ x: 0, y: 0 });
+      const background = clone.getLayers()[0];
+      background?.destroy();
+      const exportCanvas = clone.toCanvas({ width: base.width, height: base.height });
+      context.drawImage(exportCanvas, 0, 0);
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (result) => (result ? resolve(result) : reject(new Error("no se pudo codificar el PNG"))),
+          "image/png",
+        );
+      });
+      return new Uint8Array(await blob.arrayBuffer());
+    };
+  }, [htmlImage, naturalSize, state.imageSize]);
+
+  useEffect(() => {
+    onExporterReady(exporter);
+    return () => onExporterReady(null);
+  }, [exporter, onExporterReady]);
 
   const cursor = state.tool === SELECT_TOOL ? "default" : "crosshair";
 
