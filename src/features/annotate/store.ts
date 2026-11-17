@@ -94,8 +94,8 @@ export type Annotation =
   | StepAnnotation;
 
 /** Tools whose annotation is dragged from start to end. */
-export const TWO_POINT_TOOLS = ["arrow", "line", "rectangle", "ellipse"] as const satisfies readonly TwoPointTool[];
-export type TwoPointTool = (typeof TWO_POINT_TOOLS)[number] & ToolId;
+export type TwoPointTool = Extract<ToolId, "arrow" | "line" | "rectangle" | "ellipse">;
+export const TWO_POINT_TOOLS: readonly TwoPointTool[] = ["arrow", "line", "rectangle", "ellipse"];
 
 /** Tools in the toolbar order, with their shortcut letter (BRIEF flow 4). */
 export const TOOL_SHORTCUTS: readonly { readonly tool: ToolId; readonly key: string }[] = [
@@ -235,11 +235,14 @@ function restyleAnnotation(
   annotation: Annotation,
   style: { color?: string; width?: number; fontSize?: number },
 ): Annotation {
+  const color = style.color ?? annotation.color;
   switch (annotation.kind) {
     case "text":
-      return { ...annotation, color: style.color ?? annotation.color, fontSize: style.fontSize ?? annotation.fontSize };
+      return { ...annotation, color, fontSize: style.fontSize ?? annotation.fontSize };
+    case "step":
+      return { ...annotation, color };
     default:
-      return { ...annotation, color: style.color ?? annotation.color, width: style.width ?? annotation.width };
+      return { ...annotation, color, width: style.width ?? annotation.width };
   }
 }
 

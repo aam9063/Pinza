@@ -1,3 +1,4 @@
+export type { ArrowAnnotation } from "./store";
 import type { ArrowAnnotation } from "./store";
 
 /** Test helper: an arrow annotation. */

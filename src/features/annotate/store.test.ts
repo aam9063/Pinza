@@ -62,8 +62,12 @@ describe("editor history", () => {
     let state = editorReducer(INITIAL_STATE, { type: "commit", annotation: stroke("a", [0, 0, 10, 10]) });
     state = editorReducer(state, { type: "commit", annotation: stroke("b", [50, 50, 60, 60]) });
     state = editorReducer(state, { type: "move", id: "a", dx: 5, dy: -3 });
-    const a = state.annotations.find((annotation) => annotation.id === "a");
-    const b = state.annotations.find((annotation) => annotation.id === "b");
+    const a = state.annotations.find(
+      (annotation): annotation is PencilAnnotation => annotation.id === "a" && annotation.kind === "pencil",
+    );
+    const b = state.annotations.find(
+      (annotation): annotation is PencilAnnotation => annotation.id === "b" && annotation.kind === "pencil",
+    );
     expect(a?.points).toEqual([5, -3, 15, 7]);
     expect(b?.points).toEqual([50, 50, 60, 60]);
     expect(canUndo(state)).toBe(true);
@@ -144,16 +148,16 @@ describe("two-point annotations", () => {
       annotation: { kind: "pencil", id: "p", points: [10, 20, 30, 40], color: "#000", width: 4 },
     });
     state = editorReducer(state, { type: "transform", id: "p", dx: 0, dy: 0, scaleX: 2, scaleY: 2 });
-    const pencil = state.annotations[0];
-    expect(pencil.kind === "pencil" && pencil.points).toEqual([20, 40, 60, 80]);
-    expect(pencil.kind === "pencil" && pencil.width).toBe(8);
+    const pencil = state.annotations.find((a) => a.id === "p");
+    expect(pencil?.kind === "pencil" && pencil.points).toEqual([20, 40, 60, 80]);
+    expect(pencil?.kind === "pencil" && pencil.width).toBe(8);
 
     let textState = editorReducer(INITIAL_STATE, {
       type: "commit",
       annotation: { kind: "text", id: "t", x: 10, y: 10, text: "hola", color: "#000", fontSize: 20 },
     });
     textState = editorReducer(textState, { type: "transform", id: "t", dx: 0, dy: 0, scaleX: 2, scaleY: 2 });
-    const text = textState.annotations[0];
-    expect(text.kind === "text" && text.fontSize).toBe(40);
+    const text = textState.annotations.find((a) => a.id === "t");
+    expect(text?.kind === "text" && text.fontSize).toBe(40);
   });
 });
