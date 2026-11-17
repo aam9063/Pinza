@@ -56,8 +56,6 @@ export function ClothesLine() {
       clearTimeout(settle);
       window.removeEventListener("resize", publish);
     };
-    window.addEventListener("resize", publish);
-    return () => window.removeEventListener("resize", publish);
   }, [entries, visible]);
 
   return (

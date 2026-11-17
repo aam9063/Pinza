@@ -2,7 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 
 const invoke = vi.fn();
 const listen = vi.fn();
-vi.mock("@tauri-apps/api/core", () => ({ invoke }));
+vi.mock("@tauri-apps/api/core", () => {
+  class Channel {
+    onmessage: ((message: unknown) => void) | null = null;
+  }
+  return { invoke, Channel };
+});
 vi.mock("@tauri-apps/api/event", () => ({ listen }));
 
 const { copyImage, getAppInfo, getShelf, onLineHidden, onLineShown, openFile, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching, setThumbnailRects, startDrag, trashFile } =
@@ -85,7 +90,7 @@ describe("typed ipc layer", () => {
     expect(invoke).toHaveBeenCalledWith(command, { path: "C:/capturas/a.png" });
   });
 
-  it("startDrag reports the dragged path without going through invoke", async () => {
+  it("startDrag resolves with the dragged path after the plugin call", async () => {
     await expect(startDrag("C:/capturas/a.png")).resolves.toEqual({ path: "C:/capturas/a.png" });
   });
 

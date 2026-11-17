@@ -48,7 +48,6 @@ export interface CommandMap {
   readonly copy_image: { readonly args: { readonly path: string }; readonly result: FileOutcome };
   readonly open_file: { readonly args: { readonly path: string }; readonly result: FileOutcome };
   readonly trash_file: { readonly args: { readonly path: string }; readonly result: FileOutcome };
-  readonly start_drag: { readonly args: { readonly path: string }; readonly result: FileOutcome };
   readonly resume_watching: { readonly args: Record<string, never>; readonly result: null };
 }
 

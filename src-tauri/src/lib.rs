@@ -166,9 +166,12 @@ fn spawn_reveal_loop(app: AppHandle) {
             // debajo (BRIEF §5.4). Se aplica solo al cambiar para no martillear.
             let interactive = machine.is_shown()
                 && tick.cursor_in_strip
-                && cursor_y
-                    .zip(cursor_x)
-                    .is_some_and(|(y, x)| app.state::<Mutex<Vec<ThumbRect>>>().lock().map(|rects| rects.iter().any(|rect| rect.contains(x, y))).unwrap_or(false));
+                && cursor_y.zip(cursor_x).is_some_and(|(y, x)| {
+                    app.state::<Mutex<Vec<ThumbRect>>>()
+                        .lock()
+                        .map(|rects| rects.iter().any(|rect| rect.contains(x, y)))
+                        .unwrap_or(false)
+                });
             if interactive != last_interactive {
                 if let Some(window) = app.get_webview_window(windows_mgr::LINE_LABEL) {
                     if let Err(error) = window.set_ignore_cursor_events(!interactive) {

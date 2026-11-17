@@ -1,7 +1,4 @@
-use tauri::{AppHandle, Manager};
 use serde::Deserialize;
-
-use crate::windows_mgr::LINE_LABEL;
 
 /// Rectángulo físico (px de pantalla) de una miniatura dentro de la franja.
 #[derive(Debug, Clone, Copy, Deserialize)]
@@ -25,7 +22,6 @@ impl ThumbRect {
 /// ignora el ratón, la web no recibe eventos: por eso decide Rust, no la web.
 #[tauri::command]
 pub fn set_thumbnail_rects(
-    app: AppHandle,
     rects: tauri::State<'_, std::sync::Mutex<Vec<ThumbRect>>>,
     thumbnails: Vec<ThumbRect>,
 ) -> Result<(), String> {
@@ -33,8 +29,5 @@ pub fn set_thumbnail_rects(
         .lock()
         .map_err(|_| "la tabla de rectángulos está envenenada".to_string())?;
     *guard = thumbnails;
-    let _ = app; // reservado para futuras validaciones por ventana
     Ok(())
 }
-
-

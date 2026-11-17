@@ -78,7 +78,7 @@ export function trashFile(path: string): Promise<FileOutcome> {
 }
 
 /** Starts the native OS drag of the screenshot file to other apps. */
-export function startDrag(path: string): Promise<FileOutcome> {
-  void startFileDrag(path);
-  return Promise.resolve({ path });
+export async function startDrag(path: string): Promise<FileOutcome> {
+  await startFileDrag(path);
+  return { path };
 }
