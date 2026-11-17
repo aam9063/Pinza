@@ -22,6 +22,21 @@ use tauri::{AppHandle, Emitter, Manager};
 use watcher::{OnScreenshot, WatchControl, WatcherConfig};
 
 const WATCH_DIR_ENV: &str = "PINZA_WATCH_DIR";
+const DATA_DIR_ENV: &str = "PINZA_DATA_DIR";
+
+/// Carpeta de datos de Pinza: la que fija `PINZA_DATA_DIR` (verificación y
+/// desarrollo) o la estándar de la app. Solo la carpeta de miniaturas se
+/// sirve por el protocolo de assets, nunca las capturas originales.
+fn resolve_data_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    if let Ok(data_dir) = std::env::var(DATA_DIR_ENV) {
+        if !data_dir.trim().is_empty() {
+            return Ok(PathBuf::from(data_dir));
+        }
+    }
+    app.path()
+        .app_data_dir()
+        .map_err(|error| format!("no se pudo resolver la carpeta de datos: {error}"))
+}
 
 pub fn run() {
     let result = tauri::Builder::default()
@@ -37,6 +52,7 @@ pub fn run() {
         ])
         .setup(|app| {
             windows_mgr::attach_line_to_primary_monitor(app.handle())?;
+            serve_thumbnails_scope(app.handle());
             setup_watcher(app.handle());
             Ok(())
         })
@@ -46,6 +62,35 @@ pub fn run() {
         log::error!("el shell de Pinza no pudo arrancar: {error}");
         std::process::exit(1);
     }
+}
+
+/// Sirve solo la carpeta de miniaturas por el protocolo de assets de Tauri:
+/// la web puede pintar miniaturas pero no abrir las capturas originales.
+fn serve_thumbnails_scope(app: &AppHandle) {
+    let scope = app.asset_protocol_scope();
+
+    let data_dir = match resolve_data_dir(app) {
+        Ok(dir) => dir,
+        Err(error) => {
+            log::error!("{error}");
+            return;
+        }
+    };
+    let cache = thumbnails::cache_dir(&data_dir);
+
+    if let Err(error) = std::fs::create_dir_all(&cache) {
+        log::error!("no se pudo crear la caché de miniaturas: {error}");
+        return;
+    }
+    if let Err(error) = scope.allow_directory(&cache, true) {
+        log::error!("no se pudo permitir la carpeta de miniaturas en el scope: {error}");
+        return;
+    }
+
+    if !app.manage(Mutex::new(cache.clone())) {
+        log::error!("no se pudo registrar la caché de miniaturas");
+    }
+    log::info!("miniaturas servidas desde {cache:?}");
 }
 
 /// Arranca la vigilancia sin impedir que la app abra: la bandeja y las
