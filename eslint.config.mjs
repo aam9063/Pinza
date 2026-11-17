@@ -90,7 +90,7 @@ export default tseslint.config(
       "scripts/**/*.{mjs,js,ts}",
       "e2e/**/*.ts",
     ],
-    languageOptions: { globals: { ...globals.node } },
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
     rules: { "no-console": "off" },
   },
 );

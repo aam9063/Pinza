@@ -17,7 +17,19 @@
     "arch": "depcruise src --config .dependency-cruiser.mjs",
     "verify": "pnpm typecheck && pnpm lint && pnpm arch && pnpm test && pnpm build:web",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "dev:debug": "node scripts/verify/dev-debug.mjs",
+    "verify:export": "node scripts/verify/export.mjs",
+    "verify:shot": "node scripts/verify/shot.mjs",
+    "verify:desktop-shot": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify/desktop-shot.ps1",
+    "verify:logs": "node scripts/verify/logs.mjs",
+    "verify:trace": "node scripts/verify/trace.mjs",
+    "verify:heap": "node scripts/verify/heap.mjs",
+    "verify:network": "node scripts/verify/network.mjs",
+    "verify:ipc": "node scripts/verify/ipc.mjs",
+    "seed:screenshots": "node scripts/verify/seed-screenshots.mjs",
+    "verify:native": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify/native.ps1",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@tauri-apps/api": "2.12.5",
