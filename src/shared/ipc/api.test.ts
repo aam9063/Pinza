@@ -10,7 +10,7 @@ vi.mock("@tauri-apps/api/core", () => {
 });
 vi.mock("@tauri-apps/api/event", () => ({ listen }));
 
-const { copyImage, getAppInfo, getShelf, onLineHidden, onLineShown, openFile, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching, setThumbnailRects, startDrag, trashFile } =
+const { copyImage, getAppInfo, saveAnnotated, getShelf, onLineHidden, onLineShown, openFile, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching, setThumbnailRects, startDrag, trashFile } =
   await import("./api");
 
 describe("typed ipc layer", () => {
@@ -88,6 +88,18 @@ describe("typed ipc layer", () => {
 
     await expect(call("C:/capturas/a.png")).resolves.toEqual(outcome);
     expect(invoke).toHaveBeenCalledWith(command, { path: "C:/capturas/a.png" });
+  });
+
+  it("routes save_annotated with the original path and the PNG bytes", async () => {
+    const outcome = { path: "C:/capturas/a_anotada.png" };
+    invoke.mockResolvedValueOnce(outcome);
+    const bytes = new Uint8Array([137, 80, 78, 71]);
+
+    await expect(saveAnnotated("C:/capturas/a.png", bytes)).resolves.toEqual(outcome);
+    expect(invoke).toHaveBeenCalledWith("save_annotated", {
+      original: "C:/capturas/a.png",
+      annotatedPng: [137, 80, 78, 71],
+    });
   });
 
   it("startDrag resolves with the dragged path after the plugin call", async () => {

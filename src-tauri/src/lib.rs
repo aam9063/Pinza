@@ -68,6 +68,7 @@ pub fn run() {
             commands::file_ops::copy_image,
             commands::file_ops::open_file,
             commands::file_ops::trash_file,
+            commands::file_ops::save_annotated,
         ])
         .setup(|app| {
             windows_mgr::attach_line_to_primary_monitor(app.handle())?;

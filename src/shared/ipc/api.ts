@@ -82,6 +82,12 @@ export function trashFile(path: string): Promise<FileOutcome> {
   return invokeCommand("trash_file", { path });
 }
 
+/** Saves the annotated copy next to the original; Rust owns the file name
+ * (`captura_<fecha>_<hora>_anotada.png`) and hangs it on the line. */
+export function saveAnnotated(original: string, annotatedPng: Uint8Array): Promise<FileOutcome> {
+  return invokeCommand("save_annotated", { original, annotatedPng: Array.from(annotatedPng) });
+}
+
 /** Starts the native OS drag of the screenshot file to other apps. */
 export async function startDrag(path: string): Promise<FileOutcome> {
   await startFileDrag(path);

@@ -48,6 +48,10 @@ export interface CommandMap {
   readonly get_editor_capture: { readonly args: Record<string, never>; readonly result: string | null };
   readonly copy_image: { readonly args: { readonly path: string }; readonly result: FileOutcome };
   readonly open_file: { readonly args: { readonly path: string }; readonly result: FileOutcome };
+  readonly save_annotated: {
+    readonly args: { readonly original: string; readonly annotatedPng: number[] };
+    readonly result: FileOutcome;
+  };
   readonly trash_file: { readonly args: { readonly path: string }; readonly result: FileOutcome };
   readonly resume_watching: { readonly args: Record<string, never>; readonly result: null };
 }
