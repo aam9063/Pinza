@@ -5,7 +5,7 @@
 import { motion } from "motion/react";
 
 import { assetUrl, type ShelfEntry } from "@/shared/ipc";
-import { springDrop, springSway, thumbnailHanging } from "@/shared/motion/presets";
+import { springDrop, thumbnailHanging } from "@/shared/motion/presets";
 
 /** Random-looking but stable rotation per entry, between -2 and 2 degrees. */
 function tilt(id: number): number {
@@ -60,12 +60,6 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
           Nueva
         </span>
       )}
-      <motion.span
-        aria-hidden
-        className="absolute -inset-y-1 left-1/2 w-px bg-ink/20"
-        animate={{ transform: ["rotate(0deg)", "rotate(1.5deg)", "rotate(-1.5deg)", "rotate(0deg)"] }}
-        transition={{ ...springSway, repeat: Infinity, repeatDelay: 4, duration: 2.4 }}
-      />
     </motion.figure>
   );
 }
