@@ -94,6 +94,7 @@ describe("editor history", () => {
 });
 
 import { arrow, type ArrowAnnotation } from "./store.helpers";
+import type { RedactAnnotation } from "./store";
 
 describe("two-point annotations", () => {
   it("commits an arrow and moves it without touching others", () => {
@@ -159,5 +160,48 @@ describe("two-point annotations", () => {
     textState = editorReducer(textState, { type: "transform", id: "t", dx: 0, dy: 0, scaleX: 2, scaleY: 2 });
     const text = textState.annotations.find((a) => a.id === "t");
     expect(text?.kind === "text" && text.fontSize).toBe(40);
+  });
+});
+
+describe("redact and crop", () => {
+  it("crops the space: shifts annotations inside and drops the rest", () => {
+    let state = editorReducer(INITIAL_STATE, { type: "commit", annotation: arrow("in", 50, 50, 100, 80) });
+    state = editorReducer(state, { type: "commit", annotation: arrow("out", 300, 300, 400, 360) });
+    state = editorReducer(state, {
+      type: "crop",
+      rect: { x: 20, y: 20, width: 200, height: 150 },
+    });
+    expect(state.annotations.map((annotation) => annotation.id)).toEqual(["in"]);
+    const kept = state.annotations[0] as ArrowAnnotation;
+    expect([kept.x0, kept.y0, kept.x1, kept.y1]).toEqual([30, 30, 80, 60]);
+    expect(state.imageSize).toEqual({ width: 200, height: 150 });
+    expect(canUndo(state)).toBe(true);
+  });
+
+  it("tiny crops are a no-op", () => {
+    const state = editorReducer(INITIAL_STATE, {
+      type: "crop",
+      rect: { x: 0, y: 0, width: 4, height: 4 },
+    });
+    expect(state).toBe(INITIAL_STATE);
+  });
+
+  it("undo restores the pre-crop space", () => {
+    let state = editorReducer(INITIAL_STATE, { type: "commit", annotation: arrow("a", 50, 50, 100, 80) });
+    state = editorReducer(state, { type: "crop", rect: { x: 20, y: 20, width: 200, height: 150 } });
+    state = editorReducer(state, { type: "undo" });
+    expect(state.imageSize).toEqual({ width: 0, height: 0 });
+    expect(state.annotations).toHaveLength(1);
+  });
+
+  it("commits a redact region with its effect", () => {
+    const state = editorReducer(INITIAL_STATE, {
+      type: "commit",
+      annotation: { kind: "redact", id: "r", x0: 10, y0: 10, x1: 60, y1: 40, color: "#000000", width: 1, effect: "pixelate" },
+    });
+    const redact = state.annotations.find(
+      (annotation): annotation is RedactAnnotation => annotation.kind === "redact",
+    );
+    expect(redact?.effect).toBe("pixelate");
   });
 });

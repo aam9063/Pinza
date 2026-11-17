@@ -12,7 +12,9 @@ export type ToolId =
   | "rectangle"
   | "ellipse"
   | "text"
-  | "step";
+  | "step"
+  | "redact"
+  | "crop";
 
 /** Every shape drawn from two points (drag start → drag end). */
 interface TwoPointBase {
@@ -83,7 +85,15 @@ export interface StepAnnotation {
   readonly radius: number;
 }
 
+/** A sensitive-data region: the underlying image pixels, blurred. */
+export interface RedactAnnotation extends TwoPointBase {
+  readonly kind: "redact";
+  /** "pixelate" or "blur"; the export rasterizes the region. */
+  readonly effect: "pixelate" | "blur";
+}
+
 export type Annotation =
+  | RedactAnnotation
   | PencilAnnotation
   | HighlighterAnnotation
   | ArrowAnnotation
@@ -96,6 +106,11 @@ export type Annotation =
 /** Tools whose annotation is dragged from start to end. */
 export type TwoPointTool = Extract<ToolId, "arrow" | "line" | "rectangle" | "ellipse">;
 export const TWO_POINT_TOOLS: readonly TwoPointTool[] = ["arrow", "line", "rectangle", "ellipse"];
+
+/** Is this annotation a region-based effect (pixelate/blur)? */
+export function isRedact(annotation: Annotation): annotation is RedactAnnotation {
+  return annotation.kind === "redact";
+}
 
 /** Tools in the toolbar order, with their shortcut letter (BRIEF flow 4). */
 export const TOOL_SHORTCUTS: readonly { readonly tool: ToolId; readonly key: string }[] = [
@@ -114,16 +129,24 @@ export function isTwoPointTool(tool: ToolId): tool is TwoPointTool {
   return (TWO_POINT_TOOLS as readonly string[]).includes(tool);
 }
 
+/** One history frame: annotations plus the image size at that moment. */
+interface HistoryFrame {
+  readonly annotations: readonly Annotation[];
+  readonly imageSize: { width: number; height: number };
+}
+
 export interface EditorState {
   readonly annotations: readonly Annotation[];
-  readonly past: readonly (readonly Annotation[])[];
-  readonly future: readonly (readonly Annotation[])[];
+  readonly past: readonly HistoryFrame[];
+  readonly future: readonly HistoryFrame[];
   readonly tool: ToolId;
   readonly color: string;
   readonly strokeWidth: number;
   readonly fontSize: number;
   /** Next number for the step tool (auto-increments per placed step). */
   readonly nextStep: number;
+  /** Current image size after crops (starts as the capture size). */
+  readonly imageSize: { width: number; height: number };
 }
 
 export const INITIAL_STATE: EditorState = {
@@ -135,6 +158,7 @@ export const INITIAL_STATE: EditorState = {
   strokeWidth: 3,
   fontSize: 20,
   nextStep: 1,
+  imageSize: { width: 0, height: 0 },
 };
 
 /** The four quick colors of the style bar (BRIEF flow 4, Style table). */
@@ -143,7 +167,15 @@ export const QUICK_COLORS = ["#1D4FBF", "#D64545", "#1F9D55", "#1A1A1A"] as cons
 /** The three quick widths, in image pixels. */
 export const QUICK_WIDTHS = [2, 4, 8] as const;
 
+export interface CropRect {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
 export type EditorAction =
+  | { type: "crop"; rect: CropRect }
   | { type: "commit"; annotation: Annotation }
   | { type: "replace"; annotations: readonly Annotation[] }
   | { type: "move"; id: string; dx: number; dy: number }
@@ -159,10 +191,15 @@ export type EditorAction =
   | { type: "set-font-size"; fontSize: number };
 
 function pushHistory(state: EditorState, annotations: readonly Annotation[]): EditorState {
+  return pushFrame(state, { annotations, imageSize: state.imageSize });
+}
+
+function pushFrame(state: EditorState, frame: HistoryFrame): EditorState {
   return {
     ...state,
-    past: [...state.past, state.annotations],
-    annotations,
+    past: [...state.past, { annotations: state.annotations, imageSize: state.imageSize }],
+    annotations: frame.annotations,
+    imageSize: frame.imageSize,
     future: [],
   };
 }
@@ -241,6 +278,8 @@ function restyleAnnotation(
       return { ...annotation, color, fontSize: style.fontSize ?? annotation.fontSize };
     case "step":
       return { ...annotation, color };
+    case "redact":
+      return { ...annotation, color };
     default:
       return { ...annotation, color, width: style.width ?? annotation.width };
   }
@@ -250,8 +289,43 @@ function withId(annotation: Annotation, id: string): Annotation {
   return { ...annotation, id } as Annotation;
 }
 
+/** True when every coordinate of the annotation stays inside the crop. */
+function annotationBoundsInside(annotation: Annotation, width: number, height: number): boolean {
+  switch (annotation.kind) {
+    case "pencil":
+    case "highlighter":
+      return annotation.points.every((value, index) =>
+        index % 2 === 0 ? value >= 0 && value <= width : value >= 0 && value <= height,
+      );
+    case "text":
+    case "step":
+      return annotation.x >= 0 && annotation.y >= 0 && annotation.x <= width && annotation.y <= height;
+    default:
+      return (
+        Math.min(annotation.x0, annotation.x1) >= 0 &&
+        Math.min(annotation.y0, annotation.y1) >= 0 &&
+        Math.max(annotation.x0, annotation.x1) <= width &&
+        Math.max(annotation.y0, annotation.y1) <= height
+      );
+  }
+}
+
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
   switch (action.type) {
+    case "crop": {
+      const rect = action.rect;
+      if (rect.width < 8 || rect.height < 8) return state;
+      // The crop shifts every annotation into the new coordinate space and
+      // drops whatever fell outside; the image itself is cropped on export
+      // and the background layer re-fits to the new size.
+      const cropped = state.annotations
+        .map((annotation) => shiftAnnotation(annotation, -rect.x, -rect.y))
+        .filter((annotation) => annotationBoundsInside(annotation, rect.width, rect.height));
+      return pushFrame(state, {
+        annotations: cropped,
+        imageSize: { width: rect.width, height: rect.height },
+      });
+    }
     case "commit":
       return pushHistory(state, [...state.annotations, action.annotation]);
     case "replace":
@@ -312,9 +386,10 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (!previous) return state;
       return {
         ...state,
-        annotations: previous,
+        annotations: previous.annotations,
+        imageSize: previous.imageSize,
         past: state.past.slice(0, -1),
-        future: [state.annotations, ...state.future],
+        future: [{ annotations: state.annotations, imageSize: state.imageSize }, ...state.future],
       };
     }
     case "redo": {
@@ -322,8 +397,9 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (!next) return state;
       return {
         ...state,
-        annotations: next,
-        past: [...state.past, state.annotations],
+        annotations: next.annotations,
+        imageSize: next.imageSize,
+        past: [...state.past, { annotations: state.annotations, imageSize: state.imageSize }],
         future: state.future.slice(1),
       };
     }
