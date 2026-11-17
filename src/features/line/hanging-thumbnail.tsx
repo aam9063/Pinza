@@ -56,7 +56,9 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
   };
 
   const openWindowAnnotate = () => {
-    void openWindow("editor").catch((error) => logger.error("no se pudo abrir el editor", error));
+    void openWindow("editor", entry.path).catch((error) =>
+      logger.error("no se pudo abrir el editor", error),
+    );
   };
 
   // El anillo vive en un efecto: ningún temporizador se define en el render

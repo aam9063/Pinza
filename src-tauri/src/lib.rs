@@ -54,6 +54,7 @@ pub fn run() {
         .plugin(tauri_plugin_drag::init())
         .manage(Mutex::new(Shelf::default()))
         .manage(Mutex::new(Vec::<ThumbRect>::new()))
+        .manage(Mutex::new(commands::open_window::EditorTarget::default()))
         .manage(RevealControl::default())
         .manage(WatchControl::default())
         .invoke_handler(tauri::generate_handler![
@@ -63,6 +64,7 @@ pub fn run() {
             commands::watching::pause_watching,
             commands::watching::resume_watching,
             commands::line::set_thumbnail_rects,
+            commands::open_window::get_editor_capture,
             commands::file_ops::copy_image,
             commands::file_ops::open_file,
             commands::file_ops::trash_file,

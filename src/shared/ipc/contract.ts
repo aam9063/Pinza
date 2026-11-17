@@ -36,7 +36,7 @@ export interface ShelfEntry {
 export interface CommandMap {
   readonly app_info: { readonly args: Record<string, never>; readonly result: AppInfo };
   readonly open_window: {
-    readonly args: { readonly label: OpenableWindowLabel };
+    readonly args: { readonly label: OpenableWindowLabel; readonly capturePath?: string };
     readonly result: null;
   };
   readonly get_shelf: {
@@ -45,6 +45,7 @@ export interface CommandMap {
   };
   readonly pause_watching: { readonly args: Record<string, never>; readonly result: null };
   readonly set_thumbnail_rects: { readonly args: { readonly thumbnails: ThumbRect[] }; readonly result: null };
+  readonly get_editor_capture: { readonly args: Record<string, never>; readonly result: string | null };
   readonly copy_image: { readonly args: { readonly path: string }; readonly result: FileOutcome };
   readonly open_file: { readonly args: { readonly path: string }; readonly result: FileOutcome };
   readonly trash_file: { readonly args: { readonly path: string }; readonly result: FileOutcome };
