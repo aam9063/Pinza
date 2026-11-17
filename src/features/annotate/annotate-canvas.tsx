@@ -65,6 +65,9 @@ export function AnnotateCanvas({
   onSelect,
 }: CanvasProps) {
   const [htmlImage, setHtmlImage] = useState<HTMLImageElement | null>(null);
+  // The draft lives in a ref: pointer events can arrive in the same tick
+  // (fast drawing, synthetic input) and state updates would be stale.
+  const draftRef = useRef<number[]>([]);
   const [draftPoints, setDraftPoints] = useState<readonly number[]>([]);
   const stageRef = useRef<Konva.Stage | null>(null);
   const transformerRef = useRef<Konva.Transformer | null>(null);
@@ -116,32 +119,34 @@ export function AnnotateCanvas({
     if (!drawing || event.target.getStage()?.find("Path").some((path) => path === event.target)) {
       return;
     }
-    setDraftPoints(toImageCoords(event.target.getStage()?.getPointerPosition() ?? null));
+    const [x, y] = toImageCoords(event.target.getStage()?.getPointerPosition() ?? null);
+    draftRef.current = [x, y];
+    setDraftPoints(draftRef.current);
   };
 
   const onStagePointerMove = (event: Konva.KonvaEventObject<PointerEvent>) => {
-    if (!drawing || draftPoints.length === 0) return;
+    if (!drawing || draftRef.current.length === 0) return;
     const [x, y] = toImageCoords(event.target.getStage()?.getPointerPosition() ?? null);
-    setDraftPoints((current) => [...current, x, y]);
+    draftRef.current = [...draftRef.current, x, y];
+    setDraftPoints(draftRef.current);
   };
 
   const onStagePointerUp = () => {
     if (!drawing) return;
-    if (draftPoints.length < 4) {
-      setDraftPoints([]);
-      return;
-    }
+    const points = draftRef.current;
+    draftRef.current = [];
+    setDraftPoints([]);
+    if (points.length < 4) return;
     dispatch({
       type: "commit",
       annotation: {
         kind: "pencil",
         id: `stroke-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        points: draftPoints,
+        points,
         color: state.color,
         width: state.strokeWidth,
       },
     });
-    setDraftPoints([]);
   };
 
   return (
