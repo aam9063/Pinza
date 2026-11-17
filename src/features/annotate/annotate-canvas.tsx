@@ -11,6 +11,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type Konva from "konva";
 import getStroke from "perfect-freehand";
+import { Blur } from "konva/lib/filters/Blur.js";
+import { Pixelate } from "konva/lib/filters/Pixelate.js";
 import {
   Arrow as KonvaArrow,
   Circle,
@@ -30,6 +32,7 @@ import type {
   Annotation,
   EditorAction,
   EditorState,
+  RedactAnnotation,
   TwoPointTool,
 } from "./store";
 import { isTwoPointTool } from "./store";
@@ -77,6 +80,8 @@ interface CanvasProps {
   readonly dispatch: (action: EditorAction) => void;
   readonly selectedId: string | null;
   readonly onSelect: (id: string | null) => void;
+  /** Registers the PNG exporter that renders annotations at original resolution. */
+  readonly onExporterReady: (exporter: (() => Promise<Uint8Array>) | null) => void;
 }
 
 interface Draft {
@@ -94,6 +99,7 @@ export function AnnotateCanvas({
   dispatch,
   selectedId,
   onSelect,
+  onExporterReady,
 }: CanvasProps) {
   const [htmlImage, setHtmlImage] = useState<HTMLImageElement | null>(null);
   const [freehand, setFreehand] = useState<readonly number[]>([]);
@@ -102,6 +108,10 @@ export function AnnotateCanvas({
   const transformerRef = useRef<Konva.Transformer | null>(null);
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
   const [editingText, setEditingText] = useState<{ x: number; y: number; value: string } | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const panning = useRef<{ pointerId: number; x: number; y: number } | null>(null);
+  const [spaceDown, setSpaceDown] = useState(false);
 
   useEffect(() => {
     const image = new Image();
@@ -128,11 +138,33 @@ export function AnnotateCanvas({
     textAreaRef.current?.focus();
   }, [editingText]);
 
-  const toImageCoords = useCallback((point: Konva.Vector2d | null): [number, number] => {
-    const scale = stageRef.current?.scaleX() ?? 1;
-    const safe = point ?? { x: 0, y: 0 };
-    return [safe.x / scale, safe.y / scale];
+  // Space + drag pans the view (BRIEF flow 4, View table).
+  useEffect(() => {
+    const down = (event: KeyboardEvent) => {
+      if (event.code === "Space" && !event.repeat) setSpaceDown(true);
+    };
+    const up = (event: KeyboardEvent) => {
+      if (event.code === "Space") setSpaceDown(false);
+    };
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+    };
   }, []);
+
+  const toImageCoords = useCallback(
+    (point: Konva.Vector2d | null): [number, number] => {
+      const stage = stageRef.current;
+      const scale = (stage?.scaleX() ?? 1) * zoom;
+      const safe = point ?? { x: 0, y: 0 };
+      const stageX = stage?.x() ?? 0;
+      const stageY = stage?.y() ?? 0;
+      return [(safe.x - stageX) / scale, (safe.y - stageY) / scale];
+    },
+    [zoom],
+  );
 
   const fittedSize = useMemo(() => {
     const maxWidth = Math.max(320, window.innerWidth - 64);
@@ -140,6 +172,24 @@ export function AnnotateCanvas({
     const scale = Math.min(2, maxWidth / naturalSize.width, maxHeight / naturalSize.height);
     return { width: naturalSize.width * scale, height: naturalSize.height * scale, scale };
   }, [naturalSize]);
+
+  // Effective display size: the (possibly cropped) image, fitted, times zoom.
+  const view = useMemo(() => {
+    const width = state.imageSize.width > 0 ? state.imageSize.width : naturalSize.width;
+    const height = state.imageSize.height > 0 ? state.imageSize.height : naturalSize.height;
+    const fit = Math.min(
+      2,
+      Math.max(320, window.innerWidth - 64) / width,
+      Math.max(240, window.innerHeight - 140) / height,
+    );
+    return {
+      width: width * fit * zoom,
+      height: height * fit * zoom,
+      scale: fit * zoom,
+      fit,
+      base: { width, height },
+    };
+  }, [naturalSize, state.imageSize, zoom]);
 
   const drawingFreehand = FREEHAND_TOOLS.includes(state.tool);
   const drawingTwoPoint = isTwoPointTool(state.tool);
@@ -179,6 +229,11 @@ export function AnnotateCanvas({
   );
 
   const onStagePointerDown = (event: Konva.KonvaEventObject<PointerEvent>) => {
+    if (spaceDown) {
+      const pointer = event.target.getStage()?.getPointerPosition();
+      if (pointer) panning.current = { pointerId: event.evt.pointerId, x: pointer.x, y: pointer.y };
+      return;
+    }
     const [x, y] = toImageCoords(event.target.getStage()?.getPointerPosition() ?? null);
 
     if (state.tool === SELECT_TOOL) {
@@ -221,6 +276,17 @@ export function AnnotateCanvas({
   };
 
   const onStagePointerMove = (event: Konva.KonvaEventObject<PointerEvent>) => {
+    if (panning.current) {
+      const pointer = event.target.getStage()?.getPointerPosition();
+      if (pointer) {
+        setPan((current) => ({
+          x: current.x + (pointer.x - (panning.current?.x ?? pointer.x)),
+          y: current.y + (pointer.y - (panning.current?.y ?? pointer.y)),
+        }));
+        panning.current = { ...panning.current, x: pointer.x, y: pointer.y };
+      }
+      return;
+    }
     const [x, y] = toImageCoords(event.target.getStage()?.getPointerPosition() ?? null);
     if (drawingFreehand && freehand.length > 0) {
       setFreehand((current) => [...current, x, y]);
@@ -230,6 +296,10 @@ export function AnnotateCanvas({
   };
 
   const onStagePointerUp = () => {
+    if (panning.current) {
+      panning.current = null;
+      return;
+    }
     if (drawingFreehand) {
       commitFreehand();
       setFreehand([]);
@@ -281,24 +351,82 @@ export function AnnotateCanvas({
     node.position({ x: 0, y: 0 });
   };
 
+  // Export: annotations are vector paths; re-render them at original
+  // resolution over an off-screen canvas and encode the PNG. Redact regions
+  // rasterize first so pixels hide the real ones.
+  const exporter = useMemo(() => {
+    if (!htmlImage) return null;
+    const base = state.imageSize.width > 0 ? state.imageSize : naturalSize;
+    return async (): Promise<Uint8Array> => {
+      const canvas = document.createElement("canvas");
+      canvas.width = base.width;
+      canvas.height = base.height;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("no se pudo crear el lienzo de export");
+      context.drawImage(htmlImage, 0, 0, base.width, base.height);
+      const stage = stageRef.current;
+      if (!stage) throw new Error("el lienzo no está montado");
+      // Let the shapes layer draw itself into the export canvas via toCanvas
+      // of a cloned stage at scale 1 (annotations live in image coordinates).
+      const clone = stage.clone();
+      clone.width(base.width);
+      clone.height(base.height);
+      clone.scale({ x: 1, y: 1 });
+      clone.position({ x: 0, y: 0 });
+      const background = clone.getLayers()[0];
+      background?.destroy();
+      const exportCanvas = clone.toCanvas({ width: base.width, height: base.height });
+      context.drawImage(exportCanvas, 0, 0);
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (result) => (result ? resolve(result) : reject(new Error("no se pudo codificar el PNG"))),
+          "image/png",
+        );
+      });
+      return new Uint8Array(await blob.arrayBuffer());
+    };
+  }, [htmlImage, naturalSize, state.imageSize]);
+
+  useEffect(() => {
+    onExporterReady(exporter);
+    return () => onExporterReady(null);
+  }, [exporter, onExporterReady]);
+
   const cursor = state.tool === SELECT_TOOL ? "default" : "crosshair";
 
   return (
     <div data-testid="annotate-canvas" className="relative grid place-items-center overflow-auto p-4">
       <Stage
         ref={stageRef}
-        width={fittedSize.width}
-        height={fittedSize.height}
-        scaleX={fittedSize.scale}
-        scaleY={fittedSize.scale}
-        style={{ cursor }}
+        width={view.width}
+        height={view.height}
+        x={pan.x}
+        y={pan.y}
+        scaleX={view.scale}
+        scaleY={view.scale}
+        style={{ cursor: spaceDown ? "grab" : cursor }}
         onPointerDown={onStagePointerDown}
         onPointerMove={onStagePointerMove}
         onPointerUp={onStagePointerUp}
+        onWheel={(event) => {
+          if (!event.evt.ctrlKey) return;
+          event.evt.preventDefault();
+          const direction = event.evt.deltaY > 0 ? -1 : 1;
+          setZoom((current) => Math.min(6, Math.max(0.2, current + direction * 0.15)));
+        }}
       >
         <Layer listening={false}>
           {htmlImage && (
-            <KonvaImage image={htmlImage} width={naturalSize.width} height={naturalSize.height} />
+            <KonvaImage
+              image={htmlImage}
+              width={naturalSize.width}
+              height={naturalSize.height}
+              crop={
+                state.imageSize.width > 0 && state.imageSize.height > 0
+                  ? { x: 0, y: 0, width: state.imageSize.width, height: state.imageSize.height }
+                  : undefined
+              }
+            />
           )}
         </Layer>
         <Layer>
@@ -372,6 +500,15 @@ export function AnnotateCanvas({
                     radiusY={Math.abs(annotation.y1 - annotation.y0) / 2}
                     stroke={annotation.color}
                     strokeWidth={annotation.width}
+                  />
+                );
+              case "redact":
+                return (
+                  <RedactRegion
+                    key={annotation.id}
+                    {...common}
+                    annotation={annotation}
+                    htmlImage={htmlImage}
                   />
                 );
               case "text":
@@ -489,4 +626,63 @@ function TwoPointPreview({ draft, color, width }: { draft: Draft; color: string;
         />
       );
   }
+}
+
+/** Pixelates or blurs the underlying image region (BRIEF: ocultar datos sensibles). */
+function RedactRegion({
+  annotation,
+  htmlImage,
+  ...common
+}: {
+  annotation: RedactAnnotation;
+  htmlImage: HTMLImageElement | null;
+} & Record<string, unknown>) {
+  const x = Math.min(annotation.x0, annotation.x1);
+  const y = Math.min(annotation.y0, annotation.y1);
+  const width = Math.abs(annotation.x1 - annotation.x0);
+  const height = Math.abs(annotation.y1 - annotation.y0);
+  const filtered = useMemo(() => {
+    if (!htmlImage || width < 4 || height < 4) return null;
+    const source = document.createElement("canvas");
+    source.width = Math.max(1, Math.round(width));
+    source.height = Math.max(1, Math.round(height));
+    const context = source.getContext("2d");
+    if (!context) return null;
+    context.drawImage(
+      htmlImage,
+      Math.round(x),
+      Math.round(y),
+      Math.round(width),
+      Math.round(height),
+      0,
+      0,
+      source.width,
+      source.height,
+    );
+    const imageData = context.getImageData(0, 0, source.width, source.height);
+    // Konva's filters read their options through `this` on the node; calling
+    // them over a plain options object applies them to the raw ImageData.
+    // `Filter` also accepts string names, so TS widens it; the runtime value
+    // here is always the imported function.
+    const apply = Pixelate as (this: unknown, data: ImageData) => void;
+    const applyBlur = Blur as (this: unknown, data: ImageData) => void;
+    if (annotation.effect === "pixelate") {
+      const sample = Math.max(4, Math.round(Math.min(width, height) / 10));
+      apply.call({ pixelSize: () => sample }, imageData);
+    } else {
+      applyBlur.call({ blurRadius: () => 12 }, imageData);
+    }
+    context.putImageData(imageData, 0, 0);
+    return source;
+  }, [annotation.effect, height, htmlImage, width, x, y]);
+
+  return (
+    <Group {...common} x={x} y={y}>
+      <Rect width={width} height={height} fill="#000000" opacity={0.06} listening={false} />
+      {filtered && (
+        <KonvaImage image={filtered} width={width} height={height} listening={false} />
+      )}
+      <Rect width={width} height={height} stroke={annotation.color} strokeWidth={1} listening={false} />
+    </Group>
+  );
 }

@@ -140,3 +140,147 @@ mod tests {
         assert!(trash_file(missing).is_err());
     }
 }
+
+/// Escribe la captura anotada junto al original con el nombre
+/// `captura_<fecha>_<hora>_anotada.png` y devuelve su ruta. El original
+/// nunca se modifica (BRIEF flujo 4, paso 3).
+#[tauri::command]
+pub fn save_annotated(original: PathBuf, annotated_png: Vec<u8>) -> Result<FileOutcome, String> {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    validate(&original)?;
+    if annotated_png.is_empty() {
+        return Err("el PNG anotado llegó vacío".to_string());
+    }
+    let Some(folder) = original.parent() else {
+        return Err(format!(
+            "la captura original no tiene carpeta: {original:?}"
+        ));
+    };
+
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|error| format!("el reloj del sistema no es consistente: {error}"))?;
+    let seconds = now.as_secs();
+    let stamp = format!(
+        "{}-{:02}-{:02}_{:02}-{:02}-{:02}",
+        1970 + seconds / 31_536_000,
+        (seconds / 2_592_000) % 12 + 1,
+        (seconds / 86_400) % 30 + 1,
+        (seconds / 3_600) % 24,
+        (seconds / 60) % 60,
+        seconds % 60
+    );
+    let stem = original
+        .file_stem()
+        .map(|stem| stem.to_string_lossy().to_string())
+        .unwrap_or_else(|| "captura".to_string());
+    let target = folder.join(format!("{stem}_{stamp}_anotada.png"));
+
+    // La decodificación valida que los bytes sean un PNG real antes de escribir.
+    let decoded = image::load_from_memory(&annotated_png)
+        .map_err(|error| format!("los bytes anotados no son un PNG válido: {error}"))?;
+    decoded
+        .save_with_format(&target, image::ImageFormat::Png)
+        .map_err(|error| format!("no se pudo escribir la anotada: {error}"))?;
+    Ok(FileOutcome { path: target })
+}
+
+#[cfg(test)]
+mod annotated_tests {
+    use super::*;
+
+    struct TempDirGuard {
+        path: PathBuf,
+    }
+
+    impl TempDirGuard {
+        fn new(name: &str) -> Self {
+            let path = std::env::temp_dir().join(format!(
+                "pinza-annotated-{name}-{}",
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_nanos()
+            ));
+            std::fs::create_dir_all(&path).unwrap();
+            Self { path }
+        }
+    }
+
+    impl Drop for TempDirGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.path);
+        }
+    }
+
+    fn png_bytes(width: u32, height: u32) -> Vec<u8> {
+        let mut buffer = std::io::Cursor::new(Vec::new());
+        image::ImageBuffer::from_fn(width, height, |x, y| {
+            image::Rgba([(x * 3) as u8, (y * 5) as u8, 200, 255])
+        })
+        .write_to(&mut buffer, image::ImageFormat::Png)
+        .unwrap();
+        buffer.into_inner()
+    }
+
+    fn write_original(dir: &Path, name: &str) -> PathBuf {
+        let path = dir.join(name);
+        std::fs::write(&path, png_bytes(64, 48)).unwrap();
+        path
+    }
+
+    #[test]
+    fn writes_the_annotated_copy_next_to_the_original_without_touching_it() {
+        let guard = TempDirGuard::new("basic");
+        let original = write_original(&guard.path, "Captura de pantalla 1.png");
+        let hash_before = {
+            let bytes = std::fs::read(&original).unwrap();
+            format!("{:x}", md5_of(&bytes))
+        };
+
+        let outcome =
+            save_annotated(original.clone(), png_bytes(64, 48)).expect("la anotada se escribe");
+
+        assert!(outcome.path.is_file());
+        assert!(outcome.path.starts_with(&guard.path));
+        let name = outcome
+            .path
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
+        assert!(name.ends_with("_anotada.png"), "nombre: {name}");
+        assert!(name.contains("Captura de pantalla 1"));
+        let hash_after = {
+            let bytes = std::fs::read(&original).unwrap();
+            format!("{:x}", md5_of(&bytes))
+        };
+        assert_eq!(hash_before, hash_after, "el original no cambia");
+    }
+
+    #[test]
+    fn rejects_empty_png_and_missing_original() {
+        let guard = TempDirGuard::new("invalid");
+        let original = write_original(&guard.path, "a.png");
+        assert!(save_annotated(original.clone(), Vec::new()).is_err());
+        assert!(save_annotated(guard.path.join("no-existe.png"), png_bytes(10, 10)).is_err());
+    }
+
+    #[test]
+    fn rejects_bytes_that_are_not_a_png() {
+        let guard = TempDirGuard::new("fake");
+        let original = write_original(&guard.path, "a.png");
+        assert!(save_annotated(original, b"esto no es un png".to_vec()).is_err());
+    }
+
+    // FNV-1a: suficiente para comparar bytes en pruebas sin dependencias.
+    fn md5_of(bytes: &[u8]) -> u64 {
+        let mut hash: u64 = 0xcbf29ce484222325;
+        for byte in bytes {
+            hash ^= u64::from(*byte);
+            hash = hash.wrapping_mul(0x100000001b3);
+        }
+        hash
+    }
+}

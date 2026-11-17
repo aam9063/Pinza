@@ -55,3 +55,19 @@ pub fn get_editor_capture(
         .map_err(|_| "el objetivo del editor está envenenado".to_string())?;
     Ok(guard.path.to_str().map(std::string::ToString::to_string))
 }
+
+/// Devuelve los bytes PNG de la captura abierta en el editor. La web los
+/// pinta desde un `data:` URL para que el lienzo de exportación no quede
+/// tainted (el protocolo de assets no sirve cabeceras CORS).
+#[tauri::command]
+pub fn get_editor_capture_png(
+    target: tauri::State<'_, std::sync::Mutex<EditorTarget>>,
+) -> Result<Vec<u8>, String> {
+    let guard = target
+        .lock()
+        .map_err(|_| "el objetivo del editor está envenenado".to_string())?;
+    if !guard.path.is_file() {
+        return Err(format!("la captura del editor no existe: {:?}", guard.path));
+    }
+    std::fs::read(&guard.path).map_err(|error| format!("no se pudo leer la captura: {error}"))
+}
