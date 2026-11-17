@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Permisos base de las ventanas de Pinza",
+  "windows": ["line", "editor", "settings", "onboarding"],
+  "permissions": ["core:default"]
+}
