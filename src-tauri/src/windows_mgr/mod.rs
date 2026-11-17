@@ -98,7 +98,11 @@ pub fn attach_line_to_primary_monitor(app: &AppHandle) -> tauri::Result<()> {
 mod tests {
     use super::*;
 
-    const KINDS: [WindowKind; 3] = [WindowKind::Editor, WindowKind::Settings, WindowKind::Onboarding];
+    const KINDS: [WindowKind; 3] = [
+        WindowKind::Editor,
+        WindowKind::Settings,
+        WindowKind::Onboarding,
+    ];
 
     #[test]
     fn every_kind_has_its_own_label_route_and_size() {
