@@ -4,7 +4,7 @@
  */
 import { useEffect, useState } from "react";
 
-import { assetUrl, getEditorCapture } from "@/shared/ipc";
+import { getEditorCapture, getEditorCaptureDataUrl } from "@/shared/ipc";
 import { logger } from "@/shared/log/logger";
 
 export interface LoadedCapture {
@@ -22,10 +22,10 @@ export function useEditorCapture(): LoadedCapture | null {
     void getEditorCapture()
       .then(async (path) => {
         if (!alive || !path) return;
-        const url = assetUrl(path);
+        const url = await getEditorCaptureDataUrl();
+        if (!alive || !url) return;
         const size = await new Promise<{ width: number; height: number }>((resolve) => {
           const image = new Image();
-          image.crossOrigin = "anonymous";
           image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
           image.onerror = () => resolve({ width: 0, height: 0 });
           image.src = url;

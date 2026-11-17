@@ -1,5 +1,5 @@
 /** Typed command wrappers. Components call these, never `invoke` directly. */
-import { invokeCommand, listenEvent, startFileDrag, type Unlisten } from "./client";
+import { closeCurrentWindow, invokeCommand, listenEvent, startFileDrag, type Unlisten } from "./client";
 import {
   LINE_HIDE_EVENT,
   LINE_SHOW_EVENT,
@@ -23,6 +23,16 @@ export function openWindow(label: OpenableWindowLabel, capturePath?: string): Pr
 /** La captura abierta en el editor, si la hay. */
 export function getEditorCapture(): Promise<string | null> {
   return invokeCommand("get_editor_capture", {});
+}
+
+/** Los bytes PNG de la captura del editor, servidos como `data:` URL para
+ * que el lienzo de exportación no quede tainted. */
+export async function getEditorCaptureDataUrl(): Promise<string | null> {
+  const bytes = await invokeCommand("get_editor_capture_png", {});
+  if (bytes.length === 0) return null;
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return `data:image/png;base64,${btoa(binary)}`;
 }
 
 /** Capturas colgadas, de la más antigua a la más nueva. */
@@ -86,6 +96,11 @@ export function trashFile(path: string): Promise<FileOutcome> {
  * (`captura_<fecha>_<hora>_anotada.png`) and hangs it on the line. */
 export function saveAnnotated(original: string, annotatedPng: Uint8Array): Promise<FileOutcome> {
   return invokeCommand("save_annotated", { original, annotatedPng: Array.from(annotatedPng) });
+}
+
+/** Closes the editor window after Guardar y cerrar. */
+export function closeWindow(): Promise<void> {
+  return closeCurrentWindow();
 }
 
 /** Starts the native OS drag of the screenshot file to other apps. */

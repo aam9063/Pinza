@@ -46,6 +46,7 @@ export interface CommandMap {
   readonly pause_watching: { readonly args: Record<string, never>; readonly result: null };
   readonly set_thumbnail_rects: { readonly args: { readonly thumbnails: ThumbRect[] }; readonly result: null };
   readonly get_editor_capture: { readonly args: Record<string, never>; readonly result: string | null };
+  readonly get_editor_capture_png: { readonly args: Record<string, never>; readonly result: number[] };
   readonly copy_image: { readonly args: { readonly path: string }; readonly result: FileOutcome };
   readonly open_file: { readonly args: { readonly path: string }; readonly result: FileOutcome };
   readonly save_annotated: {

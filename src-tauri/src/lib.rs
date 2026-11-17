@@ -65,6 +65,7 @@ pub fn run() {
             commands::watching::resume_watching,
             commands::line::set_thumbnail_rects,
             commands::open_window::get_editor_capture,
+            commands::open_window::get_editor_capture_png,
             commands::file_ops::copy_image,
             commands::file_ops::open_file,
             commands::file_ops::trash_file,

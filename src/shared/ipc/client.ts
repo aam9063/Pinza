@@ -39,6 +39,13 @@ export async function startFileDrag(path: string): Promise<void> {
   });
 }
 
+/** Closes the current Tauri window (window.close() does not work for
+ * webviews the shell created). */
+export async function closeCurrentWindow(): Promise<void> {
+  const { getCurrentWindow } = await import("@tauri-apps/api/window");
+  await getCurrentWindow().close();
+}
+
 /** Turns a filesystem path into an asset-protocol URL served by the shell. */
 export function assetUrl(filePath: string): string {
   return convertFileSrc(filePath);

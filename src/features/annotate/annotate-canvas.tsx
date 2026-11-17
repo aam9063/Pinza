@@ -115,9 +115,6 @@ export function AnnotateCanvas({
 
   useEffect(() => {
     const image = new Image();
-    // The asset protocol serves CORS headers: anonymous keeps the canvas
-    // untainted so the annotated export can be encoded (BRIEF flow 4).
-    image.crossOrigin = "anonymous";
     image.src = imageUrl;
     image.onload = () => setHtmlImage(image);
     return () => {

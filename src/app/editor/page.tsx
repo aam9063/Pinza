@@ -22,7 +22,7 @@ import {
   Waypoints,
 } from "lucide-react";
 
-import { copyImage, saveAnnotated } from "@/shared/ipc";
+import { closeWindow, copyImage, saveAnnotated } from "@/shared/ipc";
 import { logger } from "@/shared/log/logger";
 import { WindowShell } from "@/shared/ui/window-shell";
 
@@ -82,7 +82,7 @@ export default function EditorWindow() {
         logger.error("no se pudo guardar la anotada", error);
         return null;
       });
-      if (outcome) window.close();
+      if (outcome) void closeWindow();
     },
     [originalPath],
   );
