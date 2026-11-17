@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+
+  --color-accent: #1d4fbf;
+  --color-accent-label: #2f6feb;
+  --color-peg: #c99a5b;
+
+  --radius-control: 8px;
+  --radius-window: 12px;
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-hairline: var(--hairline);
+}
+
+:root {
+  --surface: #f7f7f8;
+  --surface-raised: #ffffff;
+  --ink: #1a1a1a;
+  --ink-muted: #5c5c5c;
+  --hairline: #e3e3e6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #202021;
+    --surface-raised: #2b2b2d;
+    --ink: #f2f2f2;
+    --ink-muted: #b0b0b4;
+    --hairline: #3a3a3d;
+  }
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+[data-window="editor"],
+[data-window="settings"],
+[data-window="onboarding"] {
+  min-height: 100%;
+  background: var(--surface);
+}
+
+[data-window="line"] {
+  background: transparent;
+  user-select: none;
+  cursor: default;
+}

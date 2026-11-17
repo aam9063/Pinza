@@ -4,6 +4,7 @@
 > Milestones and flows: `BRIEF.md`. Reference screens: `docs/design/`.
 
 ## Line (planned, M1)
+
 - What it is (user point of view): a clothesline at the top of the screen where every new screenshot hangs as a thumbnail.
 - Sub-features: reveal on top-edge hover, reveal on shortcut, auto-hide, drop-in animation for new screenshots, "New" badge, max thumbnails with unhang of the oldest, hide in fullscreen.
 - How to reach it in the UI: take a screenshot (Win + Print Screen), or move the cursor to the top edge, or press Ctrl + Alt + T.
@@ -15,6 +16,7 @@
 - Design: `docs/design/01-linea-desplegada.png`.
 
 ## Screenshot watcher (planned, M1)
+
 - What it is (user point of view): Pinza notices new screenshots on its own.
 - Sub-features: known-folder detection, custom folder, debounce until the PNG is fully written, pause watching.
 - How to reach it in the UI: no UI; configured in Settings > Capturas and in onboarding step 1.
@@ -25,6 +27,7 @@
 - Known pitfalls: Snipping Tool may write in several steps; the folder may be redirected (OneDrive); never watch the real folder in tests.
 
 ## Thumbnail gestures (planned, M2)
+
 - What it is (user point of view): act on a screenshot directly from the line.
 - Sub-features: hover action bar, click to copy, hold 0.4 s to annotate, double-click to open in the default viewer, drag out to Explorer or another app, move to Recycle Bin.
 - How to reach it in the UI: reveal the line and hover or click a thumbnail.
@@ -36,6 +39,7 @@
 - Design: `docs/design/02-gestos.png`.
 
 ## Annotation editor (planned, M3)
+
 - What it is (user point of view): draw on a screenshot and save an annotated copy.
 - Sub-features: select/move, pen, highlighter, arrow, line, rectangle, ellipse, text, numbered steps, pixelate/blur, crop, edit objects after drawing, undo/redo, zoom and pan, copy, save and close.
 - How to reach it in the UI: hold a thumbnail for 0.4 s or click the pencil in its action bar.
@@ -47,6 +51,7 @@
 - Design: `docs/design/03-anotar.png`.
 
 ## Settings and tray (planned, M4)
+
 - What it is (user point of view): configure Pinza and control it from the system tray.
 - Sub-features: start with Windows, shortcut, watched folder, Recycle Bin vs permanent delete, reveal mode, visible time, max thumbnails, hide in fullscreen, tray menu (show/hide, open folder, pause, settings, quit), language.
 - How to reach it in the UI: tray icon > Ajustes…
@@ -58,6 +63,7 @@
 - Design: `docs/design/04-ajustes-y-bandeja.png`.
 
 ## Onboarding (planned, M5)
+
 - What it is (user point of view): a 3-step first-run wizard.
 - Sub-features: screenshots folder, shortcut, start with Windows.
 - How to reach it in the UI: first launch after install (or with an empty `PINZA_DATA_DIR`).
