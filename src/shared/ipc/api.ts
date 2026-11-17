@@ -7,6 +7,7 @@ import {
   SCREENSHOT_REMOVED_EVENT,
   type AppInfo,
   type FileOutcome,
+  type ThumbRect,
   type OpenableWindowLabel,
   type ShelfEntry,
 } from "./contract";
@@ -32,9 +33,11 @@ export function resumeWatching(): Promise<null> {
   return invokeCommand("resume_watching", {});
 }
 
-/** Lets clicks reach Pinza only while the pointer is over a thumbnail. */
-export function setLineInteractive(interactive: boolean): Promise<null> {
-  return invokeCommand("set_line_interactive", { interactive });
+/** Publishes the physical rects of the thumbnails so the shell can toggle the
+ * click-through exactly over them (the web cannot see the cursor while the
+ * window ignores mouse events, so Rust decides). */
+export function setThumbnailRects(thumbnails: ThumbRect[]): Promise<null> {
+  return invokeCommand("set_thumbnail_rects", { thumbnails });
 }
 
 export function onScreenshotAdded(

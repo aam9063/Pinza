@@ -5,7 +5,7 @@ const listen = vi.fn();
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
 vi.mock("@tauri-apps/api/event", () => ({ listen }));
 
-const { copyImage, getAppInfo, getShelf, onLineHidden, onLineShown, openFile, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching, setLineInteractive, startDrag, trashFile } =
+const { copyImage, getAppInfo, getShelf, onLineHidden, onLineShown, openFile, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching, setThumbnailRects, startDrag, trashFile } =
   await import("./api");
 
 describe("typed ipc layer", () => {
@@ -48,11 +48,12 @@ describe("typed ipc layer", () => {
     expect(invoke).toHaveBeenCalledWith("resume_watching", {});
   });
 
-  it("routes set_line_interactive with its boolean flag", async () => {
+  it("routes set_thumbnail_rects with the physical rectangles", async () => {
     invoke.mockResolvedValueOnce(null);
+    const rects = [{ x: 0, y: 0, width: 160, height: 96 }];
 
-    await expect(setLineInteractive(true)).resolves.toBeNull();
-    expect(invoke).toHaveBeenCalledWith("set_line_interactive", { interactive: true });
+    await expect(setThumbnailRects(rects)).resolves.toBeNull();
+    expect(invoke).toHaveBeenCalledWith("set_thumbnail_rects", { thumbnails: rects });
   });
 
   it.each([
