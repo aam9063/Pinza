@@ -10,6 +10,7 @@
 mod commands;
 mod platform;
 mod shelf;
+mod thumbnails;
 mod watcher;
 mod windows_mgr;
 
