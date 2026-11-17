@@ -1,8 +1,8 @@
 # Feature Map: Pinza
 
-> Seeded before any code exists. Every entry marked **(planned)** must be replaced with real paths, selectors and commands when its milestone lands (see `AGENTS.md` section 3).
-> Milestones and flows: `BRIEF.md`. Reference screens: `docs/design/`.
-> M0 entries are real; the rest are still planned.
+> Sembrado antes de que existiera código. Cada entrada marcada **(prevista)** se sustituye por rutas, selectores y comandos reales cuando llega su hito (ver `AGENTS.md` sección 3).
+> Hitos y flujos: `BRIEF.md`. Pantallas de referencia: `docs/design/`.
+> Las entradas de M0 son reales; el resto siguen siendo previstas.
 
 ## Shell, ventanas y andamiaje (M0, real)
 
