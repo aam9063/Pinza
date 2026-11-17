@@ -49,7 +49,7 @@ export default tseslint.config(
     },
     rules: {
       "no-undef": "off",
-      "no-console": ["error", { allow: ["warn", "error", "debug", "info"] }],
+      "no-console": "error",
       "no-restricted-imports": [
         "error",
         { patterns: [...restrictedTauriImports, ...bannedModules] },
