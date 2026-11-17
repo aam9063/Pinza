@@ -84,9 +84,9 @@ fn hang_screenshot(app: &AppHandle, path: PathBuf) {
 
     let outcome = match app.state::<Mutex<Shelf>>().lock() {
         Ok(mut shelf) => shelf.hang(entry.clone()),
-        Err(_) => {
-            log::error!("la línea está envenenada: la captura {path:?} no se colgó");
-            return;
+        Err(poisoned) => {
+            log::warn!("la línea estaba envenenada; se recupera el estado y se cuelga {path:?}");
+            poisoned.into_inner().hang(entry.clone())
         }
     };
 
