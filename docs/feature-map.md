@@ -64,15 +64,15 @@
 - Trampas conocidas: exportar a la resolución original, no a la de pantalla; el fichero original debe conservar el mismo hash; los nodos de Konva viven en canvas (verificar por la API de Konva, no por DOM); el borrador del trazo y el estilo deben ir en refs (eventos en el mismo tick leen closures obsoletos); el paso numerado necesita x/y explícitos en el Group.
 - Diseño: `docs/design/03-anotar.png`; evidencia: `docs/design/evidence/m3a-editor.png` y `m3b-editor.png`.
 
-## Ajustes y bandeja (M4a real: menú de la bandeja y ajustes persistentes; atajo configurable, autostart e i18n en M4b)
+## Ajustes y bandeja (M4 real: menú, ajustes persistentes, atajo configurable, autostart e instancia única)
 
 - Qué es (punto de vista del usuario): configurar Pinza y controlarla desde la bandeja del sistema.
 - Sub-features: iniciar con Windows, atajo, carpeta vigilada, papelera frente a borrado definitivo, modo de despliegue, tiempo visible, máximo de miniaturas, ocultar en pantalla completa, menú de la bandeja (mostrar u ocultar, abrir carpeta, pausar, ajustes, salir) e idioma.
 - Cómo se llega: icono de la bandeja > Ajustes…
-- Atajos: ninguno propio.
+- Atajos: Ctrl+Alt+T por defecto, configurable en Ajustes.
 - Selectores para control programático: `settings-pane`, `settings-watch-dir`, `settings-recycle-bin`, `settings-permanent-delete`, `settings-reveal-<mode>`, `settings-max-thumbnails`, `settings-max-value`, `settings-hide-fullscreen`, `settings-saved`, `settings-loading`.
 - Ubicación del código: `src/features/settings/`, `src/app/settings/page.tsx`, `src-tauri/src/settings/`, `src-tauri/src/tray/`.
-- Backend/API (reales en M4a): JSON propio en la carpeta de datos con guardado atómico, comandos `get_settings` y `set_settings`, evento `settings:changed`, menú de bandeja nativo. (Previstos en M4b: `tauri-plugin-autostart`, `tauri-plugin-global-shortcut` configurable.)
+- Backend/API (reales en M4a): JSON propio en la carpeta de datos con guardado atómico, comandos `get_settings` y `set_settings`, evento `settings:changed`, menú de bandeja nativo. M4b reales: atajo global configurable con re-registro al vuelo (grabador en Ajustes), `tauri-plugin-autostart` aplicado desde el ajuste, `tauri-plugin-single-instance` y textos nativos centralizados en `src-tauri/src/i18n.rs`.
 - Trampas conocidas: el atajo puede chocar con otras aplicaciones; el menú de la bandeja es nativo, se verifica con `pnpm verify:native`.
 - Diseño: `docs/design/04-ajustes-y-bandeja.png`.
 
