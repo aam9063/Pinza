@@ -40,3 +40,5 @@
 ## Log
 
 **L1:** «continúa» → M4b mergeado (PR #10, `15345bb`); luz verde a M5. Rama `feature/m5-onboarding` desde `origin/dev`.
+
+**L2:** T1-T3 implementadas y verificadas contra la app real. Evidencia: con la carpeta de datos sin `settings.json` el shell abre el asistente solo (instalación limpia, criterio de M5); el paso 1 propone `C:\Users\...\Pictures\Screenshots` (FOLDERID_Screenshots) con el aviso del Recortes; el paso 2 muestra `ctrl+alt+t` con el grabador; el paso 3 trae autostart activado; al terminar, `restart_watching` deja la vigilancia activa sobre la carpeta elegida (captura sembrada cuelga en la línea) y el asistente se cierra. Checks: `cargo test` 53/53 (2 de validación de carpeta), `pnpm test` 45/45, clippy limpio, typecheck/lint/arch verdes. Commits: 594fe5b. Pendiente: push, revisión RDD y PR.
