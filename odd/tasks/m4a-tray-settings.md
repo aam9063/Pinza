@@ -43,3 +43,5 @@
 ## Log
 
 **L1:** «continuamos con M4?» → M3 completo mergeado (PR #8, `114cd69`); luz verde a M4 con el troceado M4a/M4b. Rama `feature/m4a-tray-settings` desde `origin/dev`.
+
+**L2:** T1-T5 implementadas y verificadas contra la app real. Evidencia: la bandeja se crea sin errores de arranque; la ventana settings real carga el valor actual en cada control; cambiar el tope a 3 muestra «Guardado» y la cola re-aplica al vuelo (6 capturas sembradas → 3 en `get_shelf` con sus eventos `screenshot:removed`); el JSON persiste en la carpeta de datos (`maxThumbnails: 3`) y tras reiniciar la app los ajustes cargan del disco. La carpeta temporal cambia entre sesiones del harness (PINZA_DATA_DIR distinto por defecto); la persistencia real se verificó fijando el mismo directorio en dos arranques. Checks: `cargo test` 49/49 (5 de settings + 1 de cola re-aplicada), `pnpm test` 45/45, typecheck/lint/arch verdes. Commits: ac3f3f4 (T1), 226159d (T2), 2eb1054 (T3), 10212ae (T4). Pendiente: push, revisión RDD y PR.
