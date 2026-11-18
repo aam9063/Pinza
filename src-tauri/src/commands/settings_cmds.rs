@@ -63,7 +63,7 @@ pub fn set_settings(
             .state::<std::sync::Mutex<Shelf>>()
             .lock()
             .map(|mut shelf| shelf.set_max_entries(settings.max_thumbnails))
-            .unwrap_or_default();
+            .map_err(|_| "la cola de la línea está envenenada: el tope no se aplicó".to_string())?;
         for entry in evicted {
             if let Err(error) = app.emit(crate::commands::SCREENSHOT_REMOVED_EVENT, &entry) {
                 log::error!("no se pudo avisar de la captura descolgada: {error}");
