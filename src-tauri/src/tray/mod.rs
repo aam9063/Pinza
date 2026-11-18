@@ -8,6 +8,7 @@ use tauri::{
     AppHandle, Manager,
 };
 
+use crate::i18n::tray_text;
 use crate::reveal::RevealControl;
 use crate::watcher::WatchControl;
 use crate::windows_mgr;
@@ -41,9 +42,15 @@ pub fn create(app: &AppHandle) -> Result<TrayIcon, String> {
         None::<&str>,
     )
     .map_err(|error| format!("no se pudo crear el menú: {error}"))?;
-    let settings_item = MenuItem::with_id(app, "open-settings", "Ajustes…", true, None::<&str>)
-        .map_err(|error| format!("no se pudo crear el menú: {error}"))?;
-    let quit = PredefinedMenuItem::quit(app, Some("Salir"))
+    let settings_item = MenuItem::with_id(
+        app,
+        "open-settings",
+        tray_text("open-settings"),
+        true,
+        None::<&str>,
+    )
+    .map_err(|error| format!("no se pudo crear el menú: {error}"))?;
+    let quit = PredefinedMenuItem::quit(app, Some(tray_text("quit")))
         .map_err(|error| format!("no se pudo crear el menú: {error}"))?;
 
     let menu = Menu::with_items(

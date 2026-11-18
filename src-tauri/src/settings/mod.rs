@@ -30,6 +30,11 @@ pub struct Settings {
     pub max_thumbnails: usize,
     /// Ocultar la línea cuando hay una app a pantalla completa.
     pub hide_on_fullscreen: bool,
+    /// Acelerador global para mostrar/ocultar la línea (formato de
+    /// tauri-plugin-global-shortcut, p. ej. "ctrl+alt+t").
+    pub shortcut: String,
+    /// Arrancar Pinza al iniciar Windows.
+    pub start_with_windows: bool,
 }
 
 impl Default for Settings {
@@ -40,6 +45,8 @@ impl Default for Settings {
             reveal_mode: RevealMode::Both,
             max_thumbnails: 10,
             hide_on_fullscreen: true,
+            shortcut: "ctrl+alt+t".to_string(),
+            start_with_windows: true,
         }
     }
 }
@@ -109,6 +116,8 @@ mod tests {
         assert_eq!(settings.reveal_mode, RevealMode::Both);
         assert!(settings.hide_on_fullscreen);
         assert!(settings.watch_dir.is_empty());
+        assert_eq!(settings.shortcut, "ctrl+alt+t");
+        assert!(settings.start_with_windows);
     }
 
     #[test]
@@ -133,6 +142,8 @@ mod tests {
             reveal_mode: RevealMode::Edge,
             max_thumbnails: 5,
             hide_on_fullscreen: false,
+            shortcut: "ctrl+shift+p".to_string(),
+            start_with_windows: false,
         };
         save(&guard.path, &settings).expect("los ajustes se guardan");
         assert_eq!(load(&guard.path), settings);

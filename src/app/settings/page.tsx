@@ -27,6 +27,46 @@ const REVEAL_MODES: readonly { readonly value: RevealMode; readonly label: strin
 export default function SettingsWindow() {
   const [settings, setLocal] = useState<Settings | null>(null);
   const [saved, setSaved] = useState(false);
+  const [recording, setRecording] = useState(false);
+
+  const apply = useCallback(
+    (change: Partial<Settings>) => {
+      if (!settings) return;
+      const next = { ...settings, ...change };
+      setLocal(next);
+      void setSettings(next)
+        .then(() => {
+          setSaved(true);
+          setTimeout(() => setSaved(false), 1200);
+        })
+        .catch((error) => logger.error("no se pudieron guardar los ajustes", error));
+    },
+    [settings],
+  );
+
+  // Shortcut recorder: while recording, the first keydown becomes the new
+  // accelerator (tauri format: lowercase parts joined with +).
+  useEffect(() => {
+    if (!recording) return undefined;
+    const capture = (event: KeyboardEvent) => {
+      event.preventDefault();
+      if (event.key === "Escape") {
+        setRecording(false);
+        return;
+      }
+      if (["Control", "Shift", "Alt", "Meta"].includes(event.key)) return;
+      const parts: string[] = [];
+      if (event.ctrlKey) parts.push("ctrl");
+      if (event.altKey) parts.push("alt");
+      if (event.shiftKey) parts.push("shift");
+      if (event.metaKey) parts.push("super");
+      parts.push(event.key.toLowerCase());
+      setRecording(false);
+      apply({ shortcut: parts.join("+") });
+    };
+    window.addEventListener("keydown", capture, true);
+    return () => window.removeEventListener("keydown", capture, true);
+  }, [recording, apply]);
 
   useEffect(() => {
     let alive = true;
@@ -44,20 +84,6 @@ export default function SettingsWindow() {
     };
   }, []);
 
-  const apply = useCallback(
-    (change: Partial<Settings>) => {
-      if (!settings) return;
-      const next = { ...settings, ...change };
-      setLocal(next);
-      void setSettings(next)
-        .then(() => {
-          setSaved(true);
-          setTimeout(() => setSaved(false), 1200);
-        })
-        .catch((error) => logger.error("no se pudieron guardar los ajustes", error));
-    },
-    [settings],
-  );
 
   return (
     <WindowShell window="settings">
@@ -145,6 +171,39 @@ export default function SettingsWindow() {
                     data-testid="settings-hide-fullscreen"
                   />
                   Ocultar la línea cuando una app ocupa toda la pantalla
+                </label>
+              </Field>
+            </Section>
+
+            <Section title="Teclado y sistema">
+              <Field label="Atajo para mostrar u ocultar la línea" hint="Pulsa Grabar y teclea la combinación">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={recording ? "Grabando…" : settings.shortcut}
+                    data-testid="settings-shortcut"
+                    className="w-56 rounded border border-ink/20 bg-white px-2 py-1 text-sm text-ink"
+                  />
+                  <button
+                    type="button"
+                    data-testid="settings-shortcut-record"
+                    className="rounded border border-ink/20 px-2 py-1 text-sm text-ink hover:bg-ink/5"
+                    onClick={() => setRecording(!recording)}
+                  >
+                    {recording ? "Cancelar" : "Grabar"}
+                  </button>
+                </div>
+              </Field>
+              <Field label="Sistema">
+                <label className="flex items-center gap-2 text-sm text-ink">
+                  <input
+                    type="checkbox"
+                    checked={settings.startWithWindows}
+                    onChange={(event) => apply({ startWithWindows: event.target.checked })}
+                    data-testid="settings-start-with-windows"
+                  />
+                  Iniciar Pinza al arrancar Windows
                 </label>
               </Field>
             </Section>

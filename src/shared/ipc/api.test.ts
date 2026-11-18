@@ -110,6 +110,8 @@ describe("typed ipc layer", () => {
       revealMode: "both",
       maxThumbnails: 10,
       hideOnFullscreen: true,
+      shortcut: "ctrl+alt+t",
+      startWithWindows: true,
     };
     invoke.mockResolvedValueOnce(payload);
 
@@ -125,6 +127,8 @@ describe("typed ipc layer", () => {
       revealMode: "edge" as const,
       maxThumbnails: 5,
       hideOnFullscreen: false,
+      shortcut: "ctrl+alt+t",
+      startWithWindows: true,
     };
 
     await expect(setSettings(settings)).resolves.toBeNull();
