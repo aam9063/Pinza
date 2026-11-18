@@ -1,0 +1,66 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Pinza",
+  "version": "0.1.0",
+  "identifier": "com.pinza.app",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build:web",
+    "devUrl": "http://localhost:3000",
+    "frontendDist": "../out"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "line",
+        "url": "/line/",
+        "title": "Pinza",
+        "width": 1280,
+        "height": 160,
+        "x": 0,
+        "y": 0,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "shadow": false,
+        "resizable": false,
+        "focus": false,
+        "visible": true
+      }
+    ],
+    "security": {
+      "assetProtocol": {
+        "enable": true,
+        "scope": []
+      },
+      "csp": "default-src 'self'; img-src 'self' asset: http://asset.localhost blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src ipc: http://ipc.localhost",
+      "devCsp": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-eval'; connect-src 'self' ws: ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "publisher": "Pinza",
+    "category": "Utility",
+    "shortDescription": "Cada captura de pantalla nueva, colgada en la línea.",
+    "longDescription": "Pinza cuelga cada captura de pantalla nueva en una cuerda en el borde superior de la pantalla: cópiala, anótala, ábrela o arrástrala sin buscarla en el Explorador.",
+    "windows": {
+      "nsis": {
+        "languages": [
+          "Spanish"
+        ],
+        "displayLanguageSelector": false,
+        "installMode": "currentUser"
+      }
+    }
+  }
+}

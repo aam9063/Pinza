@@ -1,0 +1,11 @@
+node_modules/
+out/
+.next/
+coverage/
+.verify/
+src-tauri/target/
+pnpm-lock.yaml
+docs/design/
+AGENTS.md
+BRIEF.md
+.atl/

@@ -1,0 +1,88 @@
+/** Payload contracts exchanged between the web UI and the Rust commands. */
+export type WindowLabel = "line" | "editor" | "settings" | "onboarding";
+
+export type OpenableWindowLabel = Exclude<WindowLabel, "line">;
+
+export interface AppInfo {
+  readonly name: string;
+  readonly version: string;
+  readonly tauriVersion: string;
+}
+
+/** Physical-pixel rectangle of a thumbnail inside the line strip. */
+export interface ThumbRect {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/** Persistent settings owned by Rust (BRIEF flow 5). */
+export type RevealMode = "edge" | "shortcut" | "both";
+
+export interface Settings {
+  readonly watchDir: string;
+  readonly useRecycleBin: boolean;
+  readonly revealMode: RevealMode;
+  readonly maxThumbnails: number;
+  readonly hideOnFullscreen: boolean;
+  /** Global accelerator (tauri format, e.g. "ctrl+alt+t"). */
+  readonly shortcut: string;
+  readonly startWithWindows: boolean;
+}
+
+export interface SettingsPayload extends Settings {
+  readonly dataDir: string;
+}
+
+/** The file an operation acted on, so the web can show feedback. */
+export interface FileOutcome {
+  readonly path: string;
+}
+
+/** A screenshot hanging on the line; the file always stays on disk. */
+export interface ShelfEntry {
+  readonly id: number;
+  readonly path: string;
+  /** Asset-protocol URL of the cached thumbnail; empty until generated. */
+  readonly thumbnail: string;
+  readonly fileName: string;
+  /** Milliseconds since the Unix epoch, as reported by the file metadata. */
+  readonly capturedAt: number;
+}
+
+export interface CommandMap {
+  readonly app_info: { readonly args: Record<string, never>; readonly result: AppInfo };
+  readonly open_window: {
+    readonly args: { readonly label: OpenableWindowLabel; readonly capturePath?: string };
+    readonly result: null;
+  };
+  readonly get_shelf: {
+    readonly args: Record<string, never>;
+    readonly result: readonly ShelfEntry[];
+  };
+  readonly pause_watching: { readonly args: Record<string, never>; readonly result: null };
+  readonly set_thumbnail_rects: { readonly args: { readonly thumbnails: ThumbRect[] }; readonly result: null };
+  readonly get_editor_capture: { readonly args: Record<string, never>; readonly result: string | null };
+  readonly get_editor_capture_png: { readonly args: Record<string, never>; readonly result: number[] };
+  readonly copy_image: { readonly args: { readonly path: string }; readonly result: FileOutcome };
+  readonly open_file: { readonly args: { readonly path: string }; readonly result: FileOutcome };
+  readonly save_annotated: {
+    readonly args: { readonly original: string; readonly annotatedPng: number[] };
+    readonly result: FileOutcome;
+  };
+  readonly restart_watching: { readonly args: { readonly folder: string }; readonly result: null };
+  readonly suggest_watch_folder: { readonly args: Record<string, never>; readonly result: string };
+  readonly get_settings: { readonly args: Record<string, never>; readonly result: SettingsPayload };
+  readonly set_settings: { readonly args: { readonly settings: Settings }; readonly result: null };
+  readonly trash_file: { readonly args: { readonly path: string }; readonly result: FileOutcome };
+  readonly resume_watching: { readonly args: Record<string, never>; readonly result: null };
+}
+
+/** Events the Rust shell emits when the line changes. */
+export const SCREENSHOT_ADDED_EVENT = "screenshot:added";
+export const SCREENSHOT_REMOVED_EVENT = "screenshot:removed";
+/** The line reveals itself (edge dwell or global shortcut) and hides again. */
+export const SETTINGS_CHANGED_EVENT = "settings:changed";
+export const LINE_SHOW_EVENT = "line:show";
+export const LINE_HIDE_EVENT = "line:hide";
