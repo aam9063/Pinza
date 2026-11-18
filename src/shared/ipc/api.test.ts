@@ -10,7 +10,7 @@ vi.mock("@tauri-apps/api/core", () => {
 });
 vi.mock("@tauri-apps/api/event", () => ({ listen }));
 
-const { copyImage, getAppInfo, saveAnnotated, getShelf, onLineHidden, onLineShown, openFile, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching, setThumbnailRects, startDrag, trashFile } =
+const { copyImage, getAppInfo, getSettings, saveAnnotated, setSettings, getShelf, onLineHidden, onLineShown, openFile, openWindow, onScreenshotAdded, onScreenshotRemoved, pauseWatching, resumeWatching, setThumbnailRects, startDrag, trashFile } =
   await import("./api");
 
 describe("typed ipc layer", () => {
@@ -100,6 +100,35 @@ describe("typed ipc layer", () => {
       original: "C:/capturas/a.png",
       annotatedPng: [137, 80, 78, 71],
     });
+  });
+
+  it("routes get_settings without arguments", async () => {
+    const payload = {
+      dataDir: "C:/datos",
+      watchDir: "",
+      useRecycleBin: true,
+      revealMode: "both",
+      maxThumbnails: 10,
+      hideOnFullscreen: true,
+    };
+    invoke.mockResolvedValueOnce(payload);
+
+    await expect(getSettings()).resolves.toEqual(payload);
+    expect(invoke).toHaveBeenCalledWith("get_settings", {});
+  });
+
+  it("routes set_settings with the full settings object", async () => {
+    invoke.mockResolvedValueOnce(null);
+    const settings = {
+      watchDir: "C:/capturas",
+      useRecycleBin: false,
+      revealMode: "edge" as const,
+      maxThumbnails: 5,
+      hideOnFullscreen: false,
+    };
+
+    await expect(setSettings(settings)).resolves.toBeNull();
+    expect(invoke).toHaveBeenCalledWith("set_settings", { settings });
   });
 
   it("startDrag resolves with the dragged path after the plugin call", async () => {

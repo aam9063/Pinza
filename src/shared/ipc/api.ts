@@ -3,12 +3,15 @@ import { closeCurrentWindow, invokeCommand, listenEvent, startFileDrag, type Unl
 import {
   LINE_HIDE_EVENT,
   LINE_SHOW_EVENT,
+  SETTINGS_CHANGED_EVENT,
   SCREENSHOT_ADDED_EVENT,
   SCREENSHOT_REMOVED_EVENT,
   type AppInfo,
   type FileOutcome,
   type ThumbRect,
   type OpenableWindowLabel,
+  type Settings,
+  type SettingsPayload,
   type ShelfEntry,
 } from "./contract";
 
@@ -96,6 +99,21 @@ export function trashFile(path: string): Promise<FileOutcome> {
  * (`captura_<fecha>_<hora>_anotada.png`) and hangs it on the line. */
 export function saveAnnotated(original: string, annotatedPng: Uint8Array): Promise<FileOutcome> {
   return invokeCommand("save_annotated", { original, annotatedPng: Array.from(annotatedPng) });
+}
+
+/** Ajustes actuales de Pinza (Rust es la fuente de verdad). */
+export function getSettings(): Promise<SettingsPayload> {
+  return invokeCommand("get_settings", {});
+}
+
+/** Aplica y persiste ajustes; emite `settings:changed`. */
+export function setSettings(settings: Settings): Promise<null> {
+  return invokeCommand("set_settings", { settings });
+}
+
+/** Suscripción a los cambios de ajustes. */
+export function onSettingsChanged(handler: (settings: Settings) => void): Promise<Unlisten> {
+  return listenEvent<Settings>(SETTINGS_CHANGED_EVENT, handler);
 }
 
 /** Closes the editor window after Guardar y cerrar. */
