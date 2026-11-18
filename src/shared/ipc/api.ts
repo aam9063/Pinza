@@ -131,8 +131,9 @@ export function closeWindow(): Promise<void> {
   return closeCurrentWindow();
 }
 
-/** Starts the native OS drag of the screenshot file to other apps. */
-export async function startDrag(path: string): Promise<FileOutcome> {
-  await startFileDrag(path);
+/** Starts the native OS drag of the screenshot file to other apps.
+ * `iconPath` is the thumbnail shown as the drag ghost (defaults to the file). */
+export async function startDrag(path: string, iconPath?: string): Promise<FileOutcome> {
+  await startFileDrag(path, iconPath);
   return { path };
 }

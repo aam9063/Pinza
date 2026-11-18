@@ -37,6 +37,9 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
   const holdStarted = useRef(false);
   /** True after a completed hold: the release click must not copy. */
   const suppressClick = useRef(false);
+  /** Origen del puntero y si ya arrancó el arrastre nativo. */
+  const dragOrigin = useRef<{ x: number; y: number } | null>(null);
+  const dragging = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -80,11 +83,34 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
   }, [holdProgress]);
 
 
-  const onPointerDown = () => {
+  const onPointerDown = (event: React.PointerEvent) => {
     suppressClick.current = false;
+    dragging.current = false;
+    dragOrigin.current = { x: event.clientX, y: event.clientY };
     beginHold();
   };
-  const onPointerUp = () => stopHold();
+  // El arrastre nativo debe empezar con el botón aún pulsado: el `dragstart`
+  // de HTML5 llega tarde (el navegador ya canceló su drag y DoDragDrop se
+  // queda esperando un botón que ya se soltó). Se dispara aquí, al moverse.
+  const onPointerMove = (event: React.PointerEvent) => {
+    const origin = dragOrigin.current;
+    if (!origin || dragging.current || event.buttons !== 1) return;
+    const distance = Math.hypot(event.clientX - origin.x, event.clientY - origin.y);
+    if (distance < 6) return;
+    dragging.current = true;
+    stopHold();
+    suppressClick.current = true;
+    // El fantasma es el propio PNG original: pasar la miniatura hacía que
+    // Explorer recibiera la ruta de la caché como contenido.
+    void startDrag(entry.path).catch((error) =>
+      logger.error("no se pudo arrastrar", error),
+    );
+  };
+
+  const onPointerUp = () => {
+    dragOrigin.current = null;
+    stopHold();
+  };
 
   const onClick = () => {
     if (suppressClick.current) return;
@@ -122,11 +148,6 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
         setHovered(false);
         stopHold();
       }}
-      draggable
-      onDragStart={(event) => {
-        event.preventDefault();
-        void startDrag(entry.path).catch((error) => logger.error("no se pudo arrastrar", error));
-      }}
     >
       <div
         className="h-3 w-2 rounded-t-sm"
@@ -148,8 +169,12 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
             onClick={onClick}
             onDoubleClick={onDoubleClick}
             onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
-            draggable
+            // Las <img> son arrastrables por defecto: sin esto el navegador
+            // inicia su propio drag HTML5 y suelta la ruta de la miniatura
+            // como texto en vez de arrastrar el fichero original.
+            draggable={false}
           />
         ) : (
           <div className="grid h-24 w-40 place-items-center text-xs text-ink-muted">

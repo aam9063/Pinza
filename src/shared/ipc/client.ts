@@ -7,6 +7,7 @@ import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 import type { CommandMap } from "./contract";
+import { logger } from "../log/logger";
 
 export type Unlisten = UnlistenFn;
 
@@ -27,14 +28,24 @@ export function listenEvent<T>(event: string, handler: (payload: T) => void): Pr
  * so the channel is bound to a no-op listener (an unbound channel can drop
  * events or warn at runtime).
  */
-export async function startFileDrag(path: string): Promise<void> {
+export async function startFileDrag(path: string, iconPath?: string): Promise<void> {
   const { Channel } = await import("@tauri-apps/api/core");
-  const onEvent = new Channel<unknown>();
-  onEvent.onmessage = () => undefined;
+  const onEvent = new Channel<{ result?: string }>();
+  // El plugin informa del desenlace del arrastre; dejarlo mudo escondía los
+  // fallos (el usuario veía que no arrastraba y el log no decía nada).
+  onEvent.onmessage = (message) => {
+    if (message?.result === "Cancel") {
+      logger.warn("el arrastre nativo terminó sin soltar sobre un destino válido");
+    }
+  };
+  // El plugin espera el contrato serde del crate `drag`: `item` es el array
+  // de rutas (untagged Files) y `image` una RUTA a la imagen del fantasma
+  // (untagged File). Pasar `{ files: [...] }` o bytes vacíos hace fallar la
+  // deserialización y el arrastre no llega a empezar.
   await invoke("plugin:drag|start_drag", {
-    item: { files: [path] },
-    image: { raw: [] },
-    options: {},
+    item: [path],
+    image: iconPath ?? path,
+    options: { mode: "copy" },
     onEvent,
   });
 }

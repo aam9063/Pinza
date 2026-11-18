@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Permisos base de las ventanas de Pinza",
   "windows": ["line", "editor", "settings", "onboarding"],
-  "permissions": ["core:default", "core:window:allow-close"]
+  "permissions": ["core:default", "core:window:allow-close", "drag:default"]
 }
