@@ -87,9 +87,15 @@ pub fn attach_line_to_primary_monitor(app: &AppHandle) -> tauri::Result<()> {
 
     let origin = monitor.position();
     let size = monitor.size();
+    // El alto se fija en píxeles LÓGICOS: así la franja escala con el DPI del
+    // monitor (150 % en portátiles, distinto en monitores grandes) y el
+    // contenido en px CSS nunca queda recortado (fallo visto en máquina
+    // limpia con PhysicalSize, que dejaba la franja a 107 px lógicos).
+    let scale = monitor.scale_factor();
+    let physical_height = (f64::from(LINE_HEIGHT) * scale).round() as u32;
 
     window.set_position(PhysicalPosition::new(origin.x, origin.y))?;
-    window.set_size(PhysicalSize::new(size.width, LINE_HEIGHT))?;
+    window.set_size(PhysicalSize::new(size.width, physical_height))?;
 
     Ok(())
 }
