@@ -13,8 +13,6 @@ pub fn restart_watching(
     watching: tauri::State<'_, WatchControl>,
     folder: String,
 ) -> Result<(), String> {
-    use tauri::Manager;
-
     let folder_path = PathBuf::from(&folder);
     if !folder_path.is_dir() {
         return Err(format!(
