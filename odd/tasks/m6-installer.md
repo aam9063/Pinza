@@ -36,3 +36,13 @@
 ## Log
 
 **L1:** «merge listo» → M5 mergeado (PR #11, `dd3ea5f`); luz verde a M6, la última entrega. Rama `feature/m6-installer` desde `origin/dev`.
+
+**L2:** T1-T2 completas. El bundle queda configurado con nombre, versión 0.1.0, publisher, descripciones en castellano, NSIS en español con `installMode: currentUser` (sin pedir privilegios de administrador) y targets solo NSIS (MSI queda fuera de v1: NSIS cubre el flujo del BRIEF). El build release generó el instalador: `src-tauri/target/release/bundle/nsis/Pinata...` → `Pinza_0.1.0_x64-setup.exe` (4,27 MiB), con el icono propio y el asistente de M5 disparándose en la primera ejecución por la instalación limpia (sin `settings.json`).
+
+**Verificación en máquina limpia (T3, la ejecuta Albert):**
+1. Copiar `Pinza_0.1.0_x64-setup.exe` a una máquina (o VM) Windows 10/11 limpia.
+2. Instalar (SmartScreen avisará: fuera de v1 la firma de código; «Más información» → «Ejecutar igualmente»).
+3. Usar: el asistente de 3 pasos arranca solo; terminar → hacer una captura (Win+Impr Pant) → la miniatura cuelga en la línea; probar el atajo, copiar, anotar, papelera.
+4. Desinstalar desde Configuración > Aplicaciones; comprobar que la línea desaparece y los procesos mueren.
+
+Pendiente: push, revisión RDD y PR.
