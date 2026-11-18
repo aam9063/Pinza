@@ -54,3 +54,15 @@ export const thumbnailHanging: Variants = {
   hang: { opacity: 1, transform: "translateY(0%) scale(1)" },
   unhung: { opacity: 0, transform: "translateY(120%) scale(0.92)" },
 };
+
+/**
+ * Tendedero-style hang: the new capture flies up from below the strip toward
+ * the rope and settles with the spring. Starts slightly oversized (closer to
+ * the viewer) and fades in while traveling.
+ */
+export const thumbnailFlying: Variants = {
+  flying: { opacity: 0, transform: "translateY(560%) scale(1.35) rotate(6deg)" },
+  hanging: { opacity: 1, transform: "translateY(0%) scale(1) rotate(0deg)" },
+  hang: { opacity: 1, transform: "translateY(0%) scale(1) rotate(0deg)" },
+  unhung: { opacity: 0, transform: "translateY(120%) scale(0.92)" },
+};

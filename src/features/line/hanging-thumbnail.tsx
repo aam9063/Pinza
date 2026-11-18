@@ -19,7 +19,7 @@ import {
   type ShelfEntry,
 } from "@/shared/ipc";
 import { logger } from "@/shared/log/logger";
-import { springDrop, thumbnailHanging } from "@/shared/motion/presets";
+import { springDrop, springSway, thumbnailFlying } from "@/shared/motion/presets";
 
 const HOLD_TO_ANNOTATE_MS = 400;
 const COPIED_PILL_MS = 1200;
@@ -107,12 +107,12 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
   return (
     <motion.figure
       data-testid={`thumbnail-${entry.id}`}
-      className="relative mx-2 flex w-40 shrink-0 flex-col items-center"
-      variants={thumbnailHanging}
-      initial="hang"
+      className="relative mx-2 flex w-40 shrink-0 flex-col items-center origin-top"
+      variants={thumbnailFlying}
+      initial="flying"
       animate="hanging"
       exit="unhung"
-      transition={springDrop}
+      transition={{ ...springDrop, opacity: { duration: 0.2 } }}
       whileHover={{ transform: "translateY(-2px) rotate(0deg)" }}
       onPointerEnter={() => setHovered(true)}
       onPointerLeave={() => {
@@ -130,9 +130,11 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
         style={{ backgroundColor: "#C99A5B" }}
         data-testid={`peg-${entry.id}`}
       />
-      <div
+      <motion.div
         className="overflow-hidden rounded-sm border border-black/10 bg-white shadow-md"
         style={{ transform: `rotate(${tilt(entry.id)}deg)` }}
+        animate={{ transform: [`rotate(${tilt(entry.id) + 3}deg)`, `rotate(${tilt(entry.id)}deg)`] }}
+        transition={{ ...springSway, delay: 0.35 }}
       >
         {entry.thumbnail ? (
           <img
@@ -171,7 +173,7 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
             Copiada
           </span>
         )}
-      </div>
+      </motion.div>
       <figcaption className="mt-1 text-[10px] text-ink-muted" data-testid={`thumb-time-${entry.id}`}>
         {new Date(entry.capturedAt).toLocaleTimeString("es-ES", {
           hour: "2-digit",
@@ -188,7 +190,7 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
       )}
       {hovered && (
         <div
-          className="absolute bottom-6 flex gap-1 rounded-full bg-white/95 px-2 py-1 shadow-md"
+          className="absolute bottom-6 flex gap-1 rounded-full bg-surface-raised/95 px-2 py-1 shadow-md"
           data-testid={`thumb-actions-${entry.id}`}
         >
           <ActionButton label="Copiar" testId="thumb-action-copy" onClick={onClick}>
