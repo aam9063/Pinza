@@ -159,6 +159,12 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
         style={{ transform: `rotate(${tilt(entry.id)}deg)` }}
         animate={{ transform: [`rotate(${tilt(entry.id) + 3}deg)`, `rotate(${tilt(entry.id)}deg)`] }}
         transition={{ ...springSway, delay: 0.35 }}
+        data-testid={`thumb-card-${entry.id}`}
+        onClick={onClick}
+        onDoubleClick={onDoubleClick}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
       >
         {entry.thumbnail ? (
           <img
@@ -166,11 +172,6 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
             alt={entry.fileName}
             className="h-24 w-40 select-none object-cover"
             data-testid={`thumb-image-${entry.id}`}
-            onClick={onClick}
-            onDoubleClick={onDoubleClick}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
             // Las <img> son arrastrables por defecto: sin esto el navegador
             // inicia su propio drag HTML5 y suelta la ruta de la miniatura
             // como texto en vez de arrastrar el fichero original.
