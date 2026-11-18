@@ -158,9 +158,11 @@ impl Shelf {
 
     /// Descolga la captura con ese identificador y la devuelve.
     #[allow(dead_code)]
-    pub fn unhang(&mut self, id: u64) -> Option<ShelfEntry> {
-        let position = self.entries.iter().position(|entry| entry.id == id)?;
-        self.entries.remove(position)
+    /// Descolga la entrada cuyo fichero es `path` (si sigue colgada). Lo usa
+    /// la papelera: el fichero ya no está y su miniatura no debe quedarse.
+    pub fn unhang_by_path(&mut self, path: &Path) -> Option<ShelfEntry> {
+        let index = self.entries.iter().position(|entry| entry.path == path)?;
+        self.entries.remove(index)
     }
 
     /// Copia de las capturas colgadas, de la más antigua a la más nueva.
@@ -292,6 +294,24 @@ mod tests {
     }
 
     #[test]
+    fn unhang_by_path_removes_the_matching_entry() {
+        let mut shelf = Shelf::new(5);
+        let target = Path::new("/capturas").join("objetivo.png");
+        let _ = shelf.hang(ShelfEntry::new(Path::new("/capturas").join("otra.png"), 0));
+        let _ = shelf.hang(ShelfEntry::new(target.clone(), 0));
+
+        let removed = shelf.unhang_by_path(&target);
+
+        assert_eq!(
+            removed.as_ref().map(|entry| entry.file_name()),
+            Some("objetivo.png")
+        );
+        assert_eq!(shelf.len(), 1);
+        assert_eq!(shelf.entries()[0].file_name(), "otra.png");
+        assert!(shelf.unhang_by_path(&target).is_none());
+    }
+
+    #[test]
     fn unhanging_removes_only_the_requested_entry() {
         let mut shelf = Shelf::new(3);
         for (index, name) in ["a.png", "b.png", "c.png"].iter().enumerate() {
@@ -299,7 +319,9 @@ mod tests {
         }
 
         let hung = shelf.entries();
-        let removed = shelf.unhang(hung[1].id()).expect("b.png está colgada");
+        let removed = shelf
+            .unhang_by_path(hung[1].path())
+            .expect("b.png está colgada");
         assert_eq!(removed.file_name(), "b.png");
 
         let entries = shelf.entries();
@@ -312,7 +334,9 @@ mod tests {
         let mut shelf = Shelf::new(2);
         shelf.hang(entry(Path::new("/capturas"), "a.png", 1));
 
-        assert!(shelf.unhang(9_999).is_none());
+        assert!(shelf
+            .unhang_by_path(Path::new("/capturas").join("no-existe.png").as_path())
+            .is_none());
         assert_eq!(shelf.len(), 1);
     }
 

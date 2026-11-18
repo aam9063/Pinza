@@ -51,12 +51,49 @@ pub fn open_file(app: tauri::AppHandle, path: PathBuf) -> Result<FileOutcome, St
     Ok(FileOutcome { path })
 }
 
-/// Envía la captura a la Papelera de reciclaje (nunca un borrado definitivo).
+/// Manda la captura a la Papelera de reciclaje o la borra definitivamente
+/// según el ajuste, y la descolga de la línea para que la miniatura no quede
+/// ahí apuntando a un fichero que ya no existe (sus botones dejaban de
+/// responder en silencio).
 #[tauri::command]
-pub fn trash_file(path: PathBuf) -> Result<FileOutcome, String> {
+pub fn trash_file(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, std::sync::Mutex<crate::shelf::Shelf>>,
+    settings: tauri::State<'_, std::sync::Mutex<crate::settings::Settings>>,
+    path: PathBuf,
+) -> Result<FileOutcome, String> {
+    use tauri::Emitter;
+
     validate(&path)?;
-    trash::delete(&path).map_err(|error| format!("no se pudo enviar a la Papelera: {error}"))?;
+    let use_recycle_bin = settings
+        .lock()
+        .map(|settings| settings.use_recycle_bin)
+        .map_err(|_| "los ajustes están envenenados".to_string())?;
+
+    remove_with_mode(&path, use_recycle_bin)?;
+
+    // Descolgar la miniatura: el fichero ya no está.
+    let removed = state
+        .lock()
+        .map_err(|_| "la línea está envenenada".to_string())?
+        .unhang_by_path(&path);
+    if let Some(entry) = removed {
+        if let Err(error) = app.emit(crate::commands::SCREENSHOT_REMOVED_EVENT, &entry) {
+            log::error!("no se pudo avisar de la captura descolgada: {error}");
+        }
+    }
+
     Ok(FileOutcome { path })
+}
+
+/// Borra el fichero según el ajuste: Papelera de reciclaje o definitivo.
+fn remove_with_mode(path: &Path, use_recycle_bin: bool) -> Result<(), String> {
+    if use_recycle_bin {
+        trash::delete(path).map_err(|error| format!("no se pudo enviar a la Papelera: {error}"))
+    } else {
+        std::fs::remove_file(path)
+            .map_err(|error| format!("no se pudo borrar definitivamente: {error}"))
+    }
 }
 
 #[cfg(test)]
@@ -128,8 +165,7 @@ mod tests {
         // directorio temporal el resultado observable es que desaparece y el
         // usuario puede restaurarlo desde la Papelera (nunca es un borrado
         // definitivo: trash::delete usa IFileOperation de Explorer).
-        let outcome = trash_file(file.clone()).expect("la captura va a la Papelera");
-        assert_eq!(outcome.path, file);
+        remove_with_mode(&file, true).expect("la captura va a la Papelera");
         assert!(!file.exists(), "el fichero salió de la carpeta temporal");
     }
 
@@ -137,7 +173,7 @@ mod tests {
     fn trashing_a_missing_file_fails() {
         let guard = TempDirGuard::new("trash-missing");
         let missing = guard.path.join("no-existe.png");
-        assert!(trash_file(missing).is_err());
+        assert!(validate(&missing).is_err());
     }
 }
 
