@@ -1,184 +1,156 @@
-# Pinza
+<p align="center">
+  <img src="src-tauri/icons/128x128@2x.png" width="120" alt="Pinza">
+</p>
 
-<img src="src-tauri/icons/128x128@2x.png" width="112" align="right" alt="Pinza">
-
-**Cada captura de pantalla nueva, colgada en una cuerda en el borde superior de Windows.**
-
-Pinza vigila tu carpeta de capturas. En cuanto aparece una nueva, la cuerda baja sola y la
-captura se tiende en ella con su pinza de madera. Desde ahí la copias, la anotas, la abres,
-la arrastras a otra aplicación o la tiras a la papelera: sin abrir el Explorador ni buscar
-nada en el escritorio.
-
-Windows 10/11 · Gratis y de código abierto · Sin cuentas, sin red, sin telemetría
-
-<br>
+<h1 align="center">Pinza</h1>
 
 <p align="center">
-  <a href="https://github.com/aam9063/Pinza/releases/latest"><b>Descargar para Windows ›</b></a>
-  &nbsp;&nbsp;·&nbsp;&nbsp;
-  <a href="#compilar-desde-el-código">Compilar desde el código</a>
-  &nbsp;&nbsp;·&nbsp;&nbsp;
-  <a href="#créditos">Créditos</a>
+  Tus capturas de pantalla, colgadas de una cuerda en el borde superior de Windows.<br>
+  Bajan solas. Las coges sin buscar nada.
+</p>
+
+<p align="center">
+  <b>Windows 10/11</b> &nbsp;·&nbsp; gratis y de código abierto &nbsp;·&nbsp; sin cuentas, sin red, sin telemetría
+</p>
+
+<p align="center">
+  <a href="https://github.com/aam9063/Pinza/releases/latest">
+    <img src="https://img.shields.io/badge/Descargar-Pinza%200.1.0-1D4FBF?style=for-the-badge&logo=windows11&logoColor=white" alt="Descargar Pinza 0.1.0">
+  </a>
+  <br>
+  <sub><code>Pinza_0.1.0_x64-setup.exe</code> · 4,5 MB · sin permisos de administrador</sub>
+</p>
+
+<p align="center">
+  <img src="docs/readme/linea.png" alt="La cuerda con tres capturas colgadas de sus pinzas, la más nueva con la etiqueta Nueva">
 </p>
 
 ---
 
-## Descarga
+## Cómo va
 
-Coge el instalador de la [última release](https://github.com/aam9063/Pinza/releases/latest):
+**Capturas algo.** Win + Impr Pant o el Recortes, como siempre. Pinza vigila tu carpeta de
+capturas y no tarda: en cuanto el PNG está completo, la cuerda baja y la captura se tiende
+en ella. La más nueva queda a la izquierda, con su pinza y la etiqueta **Nueva**.
 
-```
-Pinza_0.1.0_x64-setup.exe
-```
+**La cuerda vive escondida.** Asoma cuando llevas el puntero al borde superior de la pantalla
+o pulsas <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>T</kbd>. Al retirar el ratón vuelve a su sitio.
+Con un juego, un vídeo o una presentación a pantalla completa no aparece.
 
-Abre el fichero y sigue el asistente. Windows SmartScreen avisará de que el editor no está
-verificado: es esperado, la firma de código queda fuera de esta versión. Pulsa **Más
-información → Ejecutar de todas formas**.
+**Y no estorba.** Fuera de las miniaturas, la ventana deja pasar el ratón: los clics llegan a
+la aplicación que tengas debajo.
 
-Instala por usuario, sin permisos de administrador, y no necesita nada más: el runtime de
-WebView2 viene con Windows 10/11 actualizado.
-
-<details>
-<summary>Si prefieres compilarlo tú</summary>
 <br>
 
-Necesitas [Node.js](https://nodejs.org) 20 o superior, [pnpm](https://pnpm.io) 11 y el
-toolchain estable de Rust con las Build Tools de Visual Studio para C++.
+## Un gesto para cada cosa
+
+| Gestes | Pasa |
+|:--|:--|
+| Clic | La copia al portapapeles. Pastilla **Copiada** durante un segundo |
+| Mantener 0,4 s | Se abre el editor con esa captura dentro |
+| Doble clic | Se abre con el visor de fotos de Windows |
+| Arrastrar | El fichero original viaja a una carpeta, a un chat, a un correo o a un documento |
+| Papelera | A la Papelera de reciclaje. La pinza se abre y la captura cae |
+| Más de diez | La más antigua se descuelga. **El fichero no se borra nunca por esto** |
+
+<br>
+
+## El editor
+
+<p align="center">
+  <img src="docs/readme/editor.png" alt="Editor de anotaciones con barra de herramientas, colores, grosores y una captura con flecha, elipse, rectángulo y trazo">
+</p>
+
+Lápiz y resaltador de trazo natural, flecha, línea, rectángulo, elipse, texto y pasos
+numerados que se numeran solos. Para tapar lo que no debe verse, pixelado y difuminado. Para
+quedarte con una parte, recorte.
+
+Cada anotación sigue siendo tuya después de dibujarla: la mueves, la estiras, le cambias el
+color o el grosor, la duplicas con <kbd>Ctrl</kbd>+<kbd>D</kbd> o la borras con <kbd>Supr</kbd>.
+Deshacer y rehacer, sin límite, mientras trabajas.
+
+**Guardar y cerrar** escribe una copia `..._anotada.png` junto al original, a la resolución
+real de la captura, y la cuelga en la cuerda. El original se queda como estaba.
+
+<br>
+
+## A tu manera
+
+<p align="center">
+  <img src="docs/readme/ajustes.png" width="560" alt="Ventana de ajustes con carpeta vigilada, papelera o borrado definitivo, modo de despliegue, tope de miniaturas y pantalla completa">
+</p>
+
+Qué carpeta vigilar, si la papelera recicla o borra de verdad, cuántas capturas cuelgan, si
+la línea baja con el borde, con el atajo o con las dos cosas, si se esconde en pantalla
+completa y qué combinación de teclas la llama. Todo se guarda al momento y sigue ahí tras
+reiniciar.
+
+El primer día, un asistente de tres pasos te deja esto listo y termina con la vigilancia
+funcionando.
+
+<br>
+
+## Sin red. Sin cuentas. Sin sorpresas
+
+Pinza no hace ni una petición: no hay cuentas, ni analítica, ni comprobación de
+actualizaciones. Tus capturas, la lista de la cuerda y los ajustes se quedan en tu equipo.
+Y descolgar una captura nunca la borra del disco: solo desaparece de la línea.
+
+<br>
+
+## Instalar
+
+1. Descarga el instalador desde la [última release](https://github.com/aam9063/Pinza/releases/latest).
+2. Ábrelo. SmartScreen avisará de que el editor no está verificado — la firma de código queda
+   fuera de esta versión. **Más información → Ejecutar de todas formas**.
+3. Sigue el asistente: carpeta, atajo y arranque con Windows.
+
+<details>
+<summary><b>Compilar desde el código</b></summary>
+<br>
+
+Hace falta Node.js 20 o superior, pnpm 11 y el toolchain estable de Rust con las Build Tools
+de Visual Studio para C++.
 
 ```sh
 git clone https://github.com/aam9063/Pinza.git
 cd Pinza
 pnpm install
-pnpm tauri build
+pnpm tauri build     # instalador en src-tauri/target/release/bundle/nsis/
+pnpm dev:debug       # desarrollo con inspección del WebView
 ```
 
-El instalador aparece en `src-tauri/target/release/bundle/nsis/`. Para desarrollo con
-inspección del WebView:
-
-```sh
-pnpm dev:debug
-```
+Las comprobaciones del proyecto: `pnpm verify` (tipos, lint, pruebas, arquitectura) y
+`cargo test` en `src-tauri/`.
 
 </details>
 
 <br>
 
-## Lo que hace
-
-| Cuándo | Qué pasa |
-|:--|:--|
-| Tomas una captura | La cuerda baja sola y la captura se tiende en ella, la más nueva a la izquierda |
-| Pasas el ratón por encima | Se endereza, sube dos píxeles y aparece su barra de acciones |
-| Clic | La copia al portapapeles y te lo confirma con una pastilla «Copiada» |
-| Mantienes 0,4 s | Abre el editor de anotaciones con la captura cargada |
-| Doble clic | La abre con el visor predeterminado de Windows |
-| La arrastras | Arrastre nativo del fichero original a una carpeta, a un chat, a un correo o a un documento |
-| La tiras a la papelera | Va a la Papelera de reciclaje (o se borra, si lo cambias en Ajustes) y se descuelga de la cuerda |
-| Pasas de diez | La más antigua se descuelga; el fichero **nunca** se borra por esto |
-
-Fuera de la cuerda, la ventana deja pasar el ratón a lo que haya debajo: los clics solo
-llegan a Pinza cuando el puntero está sobre una miniatura.
-
-<br>
-
-## La cuerda
-
-- **Baja cuando la rozas.** Poner el puntero en el borde superior de la pantalla durante un
-  instante la despliega; al retirarlo se vuelve a esconder.
-- **Atajo global.** <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>T</kbd> la muestra u oculta desde
-  cualquier aplicación. Se puede cambiar en Ajustes grabando otra combinación.
-- **Nunca interrumpe.** Con un juego, un vídeo o una presentación a pantalla completa se
-  queda escondida.
-- **Vive en la bandeja.** Desde su icono abres la carpeta de capturas, pausas la vigilancia,
-  entras en Ajustes o sales.
-
-<br>
-
-## El editor de anotaciones
-
-Lápiz y resaltador de trazo natural, flecha, línea, rectángulo, elipse, texto y pasos
-numerados que se autoincrementan. Cada anotación es un objeto: la mueves, la redimensionas,
-le cambias el color o el grosor después de dibujarla, la duplicas con <kbd>Ctrl</kbd> +
-<kbd>D</kbd> y la borras con <kbd>Supr</kbd>. Deshacer y rehacer sin límite durante la sesión.
-
-Arriba tienes zoom con <kbd>Ctrl</kbd> + rueda y desplazamiento con espacio y arrastre.
-Para ocultar datos sensibles están el pixelado y el difuminado, y para quedarte solo con una
-zona, el recorte.
-
-**Guardar y cerrar** escribe `captura_<fecha>_<hora>_anotada.png` junto al original y la
-cuelga como captura nueva. El original no se toca nunca. El resultado se exporta a la
-resolución real de la captura, no a la de tu pantalla.
-
-<br>
-
-## Privacidad
-
-- **Sin red.** Pinza no hace ni una petición: ni cuentas, ni analítica, ni comprobación de
-  actualizaciones.
-- **Todo en tu equipo.** La lista de capturas, los ajustes y las miniaturas viven en tu
-  carpeta de usuario.
-- **Tus ficheros son tuyos.** El original nunca se modifica, y descolgar una captura de la
-  cuerda jamás la borra del disco.
-
-<br>
-
-## Ajustes
-
-Carpeta vigilada, Papelera de reciclaje o borrado definitivo, modo de despliegue (borde,
-atajo o ambos), cuántas miniaturas cuelgan, ocultar en pantalla completa, atajo global e
-iniciar con Windows. Todo se guarda al instante y sobrevive a los reinicios.
-
-<br>
-
 ## Lo que viene
 
-Este es el punto de partida, no el final:
+- **Más idiomas**: ahora mismo la interfaz está en castellano.
+- **Menos fallos**: cada release irá cerrando lo que vayáis encontrando.
+- **La captura viajando hasta la cuerda**: la animación está a medio camino y volverá más
+  afinada.
 
-- **Más idiomas.** La interfaz está en castellano; llegarán traducciones.
-- **Corrección de fallos.** Los que vayáis encontrando se irán arreglando en cada release.
-- **Detalles pendientes.** La animación de la captura viajando hasta la cuerda está a medio
-  camino y volverá más afinada.
-
-Si algo va mal, abre un issue con la versión de Windows, la de Pinza y los pasos para
-reproducirlo. Se agradece mucho.
+Si algo se rompe, abre un issue con tu versión de Windows, la de Pinza y cómo reproducirlo.
 
 <br>
 
-## Cómo está hecho
+## Gracias a quien tuvo la idea
 
-| Capa | Tecnología |
-|:--|:--|
-| Shell nativo | Tauri 2 sobre Rust estable: vigilante de ficheros, miniaturas, portapapeles, papelera, arrastre nativo y llamadas a Win32 |
-| Interfaz | Next.js 16 como exportación estática, React 19 y TypeScript estricto |
-| Estilos | Tailwind CSS v4 con los tokens del tema claro y oscuro |
-| Animación | Motion, solo `transform` y `opacity` |
-| Lienzo | Konva con perfect-freehand para los trazos |
-| Pruebas | Vitest y Testing Library, `cargo test`, Playwright sobre CDP y comprobaciones estáticas (ESLint, clippy, dependency-cruiser) |
+Pinza es una reinterpretación para Windows de **[Tendedero](https://github.com/alejandrobujan/tendedero)**,
+la aplicación de macOS de **[Alejandro Buján](https://alejandrobujan.com)**
+([@alejandr0bujan](https://x.com/alejandr0bujan)) que cuelga las capturas de una cuerda bajo
+la barra de menús. La idea es suya y está muy bien llevada; si tienes un Mac, pruébala.
 
-```
-src/features/        cada pantalla con su lógica (line, annotate)
-src/shared/          IPC tipada, motion, i18n y componentes
-src-tauri/src/       watcher, shelf, thumbnails, reveal, settings, tray
-```
-
-El detalle de los flujos, el reparto entre Rust y la web y los hitos está en
-[`BRIEF.md`](BRIEF.md); el mapa de features, en [`docs/feature-map.md`](docs/feature-map.md).
-
-<br>
-
-## Créditos
-
-Pinza nace de una idea que no es mía: **[Tendedero](https://github.com/alejandrobujan/tendedero)**,
-la app de macOS de **[Alejandro Buján](https://alejandrobujan.com)** ([@alejandr0bujan](https://x.com/alejandr0bujan))
-que cuelga tus capturas en una cuerda bajo la barra de menús. Es una reinterpretación
-cuidadosa para Windows, con otro stack y código propio de cero: no se ha copiado ni portado
-su código, su nombre ni su icono.
-
-Si usas Mac, pruébala: es su idea, y está muy bien hecha.
+Aquí está hecha desde cero, con otro stack y código propio: no se ha portado ni copiado
+nada de Tendedero, ni su nombre, ni su icono.
 
 <br>
 
 ## Licencia
 
-[MIT](LICENSE): úsalo, modifícalo, aprópiate de él y compártelo. El nombre Pinza y su icono
-quedan fuera de la licencia, así que un fork necesita los suyos.
+MIT. Haz lo que quieras con el código: usarlo, cambiarlo, publicarlo. El nombre **Pinza** y
+su icono no entran en la licencia, así que un fork necesita los suyos.
