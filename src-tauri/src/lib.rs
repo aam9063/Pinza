@@ -8,6 +8,7 @@
 //! intenciones a través de los comandos expuestos en `commands`.
 
 mod commands;
+mod i18n;
 mod platform;
 mod reveal;
 mod settings;
@@ -28,7 +29,7 @@ use reveal::{Action, RevealControl, RevealMachine, Tick};
 use settings::Settings;
 use shelf::{HangOutcome, Shelf, ShelfEntry};
 use tauri::{AppHandle, Emitter, Manager};
-use tauri_plugin_global_shortcut::{Builder as ShortcutBuilder, GlobalShortcutExt, ShortcutState};
+use tauri_plugin_global_shortcut::{Builder as ShortcutBuilder, ShortcutState};
 use watcher::{OnScreenshot, WatchControl, WatcherConfig};
 
 const WATCH_DIR_ENV: &str = "PINZA_WATCH_DIR";
@@ -50,8 +51,20 @@ pub(crate) fn resolve_data_dir(app: &AppHandle) -> Result<PathBuf, String> {
 
 pub fn run() {
     let result = tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            // Una segunda ejecución enfoca la línea: la app ya vive aquí.
+            if let Some(line) = app.get_webview_window(windows_mgr::LINE_LABEL) {
+                let _ = line.show();
+                let _ = line.set_focus();
+            }
+            log::info!("segunda instancia detectada: se enfocó la línea");
+        }))
         .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(ShortcutBuilder::new().build())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_drag::init())
@@ -84,26 +97,25 @@ pub fn run() {
                 // cuando el puntero pasa sobre una miniatura.
                 let _ = line.set_ignore_cursor_events(true);
             }
-            // El atajo es opcional para arrancar: si otro programa ya lo
+            if let Err(error) = commands::settings_cmds::load_into(app.handle()) {
+                log::error!("no se pudieron cargar los ajustes: {error}");
+            }
+            // El atajo guardado en ajustes manda; si otro programa ya lo
             // tiene registrado, Pinza abre igual y la línea queda a cargo del
             // despliegue por borde (BRIEF §3: la app vive en la bandeja; no
             // hay nada que abortar por un atajo ocupado).
-            if let Err(error) =
-                app.global_shortcut()
-                    .on_shortcut("ctrl+alt+t", |app, _shortcut, event| {
-                        if event.state() == ShortcutState::Pressed {
-                            app.state::<RevealControl>().request_toggle();
-                        }
-                    })
-            {
-                log::error!("el atajo global Ctrl+Alt+T no se pudo registrar: {error}");
-            }
-            if let Err(error) = commands::settings_cmds::load_into(app.handle()) {
-                log::error!("no se pudieron cargar los ajustes: {error}");
+            let shortcut = app
+                .state::<Mutex<Settings>>()
+                .lock()
+                .map(|settings| settings.shortcut.clone())
+                .unwrap_or_else(|_| "ctrl+alt+t".to_string());
+            if let Err(error) = register_reveal_shortcut(app.handle(), &shortcut) {
+                log::error!("el atajo global {shortcut} no se pudo registrar: {error}");
             }
             if let Err(error) = tray::create(app.handle()) {
                 log::error!("la bandeja no arrancó: {error}");
             }
+            apply_autostart(app.handle());
             serve_thumbnails_scope(app.handle());
             setup_watcher(app.handle());
             spawn_reveal_loop(app.handle().clone());
@@ -209,6 +221,46 @@ fn spawn_reveal_loop(app: AppHandle) {
             std::thread::sleep(sleep_for);
         }
     });
+}
+
+/// Registra (o re-registra) el atajo global de revelar. `unregister_all`
+/// limpia el anterior para que el cambio desde Ajustes sea inmediato.
+fn register_reveal_shortcut(app: &AppHandle, accelerator: &str) -> Result<(), String> {
+    use tauri_plugin_global_shortcut::GlobalShortcutExt;
+
+    let shortcuts = app.global_shortcut();
+    let _ = shortcuts.unregister_all();
+    shortcuts
+        .on_shortcut(accelerator, |app, _shortcut, event| {
+            if event.state() == ShortcutState::Pressed {
+                app.state::<RevealControl>().request_toggle();
+            }
+        })
+        .map_err(|error| error.to_string())
+}
+
+/// Aplica el ajuste de arranque con Windows al plugin de autostart.
+fn apply_autostart(app: &AppHandle) {
+    use tauri_plugin_autostart::ManagerExt;
+
+    let enabled = app
+        .state::<Mutex<Settings>>()
+        .lock()
+        .map(|settings| settings.start_with_windows)
+        .unwrap_or(true);
+    let autostart = app.autolaunch();
+    let result = if enabled {
+        autostart.enable()
+    } else {
+        autostart.disable()
+    };
+    match result {
+        Ok(()) => log::info!(
+            "arranque con Windows: {}",
+            if enabled { "activado" } else { "desactivado" }
+        ),
+        Err(error) => log::error!("no se pudo aplicar el arranque con Windows: {error}"),
+    }
 }
 
 fn emit_line_event(app: &AppHandle, event: &str, intent: &str) {

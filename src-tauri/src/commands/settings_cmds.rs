@@ -46,13 +46,22 @@ pub fn set_settings(
 ) -> Result<(), String> {
     let dir = data_dir(&app)?;
     settings::save(&dir, &settings)?;
-    let previous_limit = state
+    let (previous_limit, previous_shortcut) = state
         .lock()
-        .map(|current| current.max_thumbnails)
+        .map(|current| (current.max_thumbnails, current.shortcut.clone()))
+        .map_err(|_| "los ajustes están envenenados".to_string())?;
+    let shortcut_changed = settings.shortcut != previous_shortcut;
+    let previous_autostart = state
+        .lock()
+        .map(|current| current.start_with_windows)
         .map_err(|_| "los ajustes están envenenados".to_string())?;
     *state
         .lock()
         .map_err(|_| "los ajustes están envenenados".to_string())? = settings.clone();
+
+    if settings.start_with_windows != previous_autostart {
+        apply_autostart_flag(&app, settings.start_with_windows);
+    }
 
     // El tope nuevo re-aplica la cola al vuelo: las descolgadas emiten su
     // evento y sus ficheros nunca se borran (BRIEF flujo 3).
@@ -75,6 +84,16 @@ pub fn set_settings(
         }
     }
 
+    // El atajo nuevo se registra al vuelo (BRIEF flujo 5).
+    if shortcut_changed {
+        if let Err(error) = crate::register_reveal_shortcut(&app, &settings.shortcut) {
+            log::error!(
+                "el nuevo atajo {} no se pudo registrar: {error}",
+                settings.shortcut
+            );
+        }
+    }
+
     use tauri::Emitter;
     app.emit(super::SETTINGS_CHANGED_EVENT, &settings)
         .map_err(|error| format!("no se pudo avisar del cambio de ajustes: {error}"))?;
@@ -89,4 +108,23 @@ pub fn load_into(app: &tauri::AppHandle) -> Result<Settings, String> {
         .lock()
         .map_err(|_| "los ajustes están envenenados".to_string())? = loaded.clone();
     Ok(loaded)
+}
+
+/// Aplica el arranque con Windows al plugin (idempotente).
+fn apply_autostart_flag(app: &tauri::AppHandle, enabled: bool) {
+    use tauri_plugin_autostart::ManagerExt;
+
+    let autostart = app.autolaunch();
+    let result = if enabled {
+        autostart.enable()
+    } else {
+        autostart.disable()
+    };
+    match result {
+        Ok(()) => log::info!(
+            "arranque con Windows: {}",
+            if enabled { "activado" } else { "desactivado" }
+        ),
+        Err(error) => log::error!("no se pudo aplicar el arranque con Windows: {error}"),
+    }
 }
