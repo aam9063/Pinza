@@ -128,3 +128,10 @@ fn apply_autostart_flag(app: &tauri::AppHandle, enabled: bool) {
         Err(error) => log::error!("no se pudo aplicar el arranque con Windows: {error}"),
     }
 }
+
+/// Propone la carpeta conocida de capturas de Windows (asistente, flujo 6).
+#[tauri::command]
+pub fn suggest_watch_folder() -> Result<String, String> {
+    crate::platform::windows::known_screenshots_folder()
+        .map(|folder| folder.to_string_lossy().to_string())
+}

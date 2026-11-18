@@ -101,6 +101,16 @@ export function saveAnnotated(original: string, annotatedPng: Uint8Array): Promi
   return invokeCommand("save_annotated", { original, annotatedPng: Array.from(annotatedPng) });
 }
 
+/** Reinicia la vigilancia sobre la carpeta elegida (asistente, flujo 6). */
+export function restartWatching(folder: string): Promise<null> {
+  return invokeCommand("restart_watching", { folder });
+}
+
+/** Carpeta conocida de capturas de Windows, propuesta por el asistente. */
+export function knownScreenshotsFolder(): Promise<string> {
+  return invokeCommand("suggest_watch_folder", {});
+}
+
 /** Ajustes actuales de Pinza (Rust es la fuente de verdad). */
 export function getSettings(): Promise<SettingsPayload> {
   return invokeCommand("get_settings", {});

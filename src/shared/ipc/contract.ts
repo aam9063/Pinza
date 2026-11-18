@@ -71,6 +71,8 @@ export interface CommandMap {
     readonly args: { readonly original: string; readonly annotatedPng: number[] };
     readonly result: FileOutcome;
   };
+  readonly restart_watching: { readonly args: { readonly folder: string }; readonly result: null };
+  readonly suggest_watch_folder: { readonly args: Record<string, never>; readonly result: string };
   readonly get_settings: { readonly args: Record<string, never>; readonly result: SettingsPayload };
   readonly set_settings: { readonly args: { readonly settings: Settings }; readonly result: null };
   readonly trash_file: { readonly args: { readonly path: string }; readonly result: FileOutcome };

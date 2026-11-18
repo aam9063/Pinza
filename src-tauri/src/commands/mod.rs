@@ -5,6 +5,7 @@ pub mod file_ops;
 pub mod get_shelf;
 pub mod line;
 pub mod open_window;
+pub mod restart_watching;
 pub mod settings_cmds;
 pub mod watching;
 

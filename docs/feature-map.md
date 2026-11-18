@@ -76,14 +76,13 @@
 - Trampas conocidas: el atajo puede chocar con otras aplicaciones; el menú de la bandeja es nativo, se verifica con `pnpm verify:native`.
 - Diseño: `docs/design/04-ajustes-y-bandeja.png`.
 
-## Primer arranque (prevista, M5)
+## Primer arranque (M5 real: asistente de tres pasos que termina con la vigilancia activa)
 
 - Qué es (punto de vista del usuario): un asistente de tres pasos la primera vez.
-- Sub-features: carpeta de capturas, atajo de teclado, iniciar con Windows.
-- Cómo se llega: primer arranque tras la instalación (o con `PINZA_DATA_DIR` vacío).
-- Atajos: Intro para avanzar, Esc para volver.
-- Selectores para control programático: `onboarding-step-<n>`, `onboarding-next`, `onboarding-back` (previstos).
-- Ubicación del código: `src/features/onboarding/`, `src/app/onboarding/page.tsx`.
-- Backend/API: comandos `get_default_screenshots_dir`, `complete_onboarding` (previstos).
-- Trampas conocidas: debe terminar con la vigilancia activa y la ventana del asistente destruida.
+- Sub-features: carpeta de capturas (propone FOLDERID_Screenshots, aviso del Recortes), atajo de teclado con grabador, iniciar con Windows.
+- Cómo se llega: primer arranque tras la instalación — el shell abre el asistente solo cuando no hay `settings.json` en la carpeta de datos.
+- Selectores para control programático: `onboarding-wizard`, `onboarding-steps`, `onboarding-folder-input`, `onboarding-snipping-warning`, `onboarding-shortcut-display`, `onboarding-shortcut-record`, `onboarding-start-with-windows`, `onboarding-back`, `onboarding-next`, `onboarding-finish`.
+- Ubicación del código: `src/app/onboarding/page.tsx`, `src-tauri/src/commands/restart_watching.rs`, `src-tauri/src/commands/settings_cmds.rs` (`suggest_watch_folder`), `src-tauri/src/lib.rs` (apertura en instalación limpia).
+- Backend/API: `suggest_watch_folder`, `restart_watching`, `set_settings`; el asistente termina con `restart_watching` sobre la carpeta elegida.
+- Trampas conocidas: debe terminar con la vigilancia activa y la ventana del asistente destruida; el grabador del atajo reutiliza el patrón de la ventana settings.
 - Diseño: `docs/design/05-primer-arranque.png`.

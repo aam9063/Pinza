@@ -87,7 +87,9 @@ pub fn run() {
             commands::file_ops::open_file,
             commands::file_ops::trash_file,
             commands::file_ops::save_annotated,
+            commands::restart_watching::restart_watching,
             commands::settings_cmds::get_settings,
+            commands::settings_cmds::suggest_watch_folder,
             commands::settings_cmds::set_settings,
         ])
         .setup(|app| {
@@ -97,8 +99,20 @@ pub fn run() {
                 // cuando el puntero pasa sobre una miniatura.
                 let _ = line.set_ignore_cursor_events(true);
             }
+            let clean_install = !std::path::Path::new(&resolve_data_dir(app.handle())?)
+                .join("settings.json")
+                .exists();
             if let Err(error) = commands::settings_cmds::load_into(app.handle()) {
                 log::error!("no se pudieron cargar los ajustes: {error}");
+            }
+            if clean_install {
+                // Instalación limpia: el asistente de primer arranque guía los
+                // tres pasos (BRIEF flujo 6; criterio de M5).
+                if let Err(error) =
+                    windows_mgr::open(app.handle(), windows_mgr::WindowKind::Onboarding)
+                {
+                    log::error!("el asistente no pudo abrirse: {error}");
+                }
             }
             // El atajo guardado en ajustes manda; si otro programa ya lo
             // tiene registrado, Pinza abre igual y la línea queda a cargo del
@@ -349,7 +363,7 @@ fn generate_thumbnail(app: &AppHandle, path: &Path) -> PathBuf {
 
 /// Cuelga una captura en la línea y emite los eventos de alta y de baja que
 /// correspondan (baja si el tope descolgó la más antigua).
-fn hang_screenshot(app: &AppHandle, path: PathBuf) {
+pub(crate) fn hang_screenshot(app: &AppHandle, path: PathBuf) {
     let thumbnail = generate_thumbnail(app, &path);
     let entry = ShelfEntry::from_path(&path).with_thumbnail(thumbnail);
 
