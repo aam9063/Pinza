@@ -112,7 +112,10 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
       initial="flying"
       animate="hanging"
       exit="unhung"
-      transition={{ ...springDrop, opacity: { duration: 0.2 } }}
+      // El vuelo arranca cuando la franja ya ha bajado (0,3 s): si empieza a
+      // la vez, la miniatura viaja con la línea aún fuera de vista y solo se
+      // ve aparecer, que es justo lo que no pasaba en Tendedero.
+      transition={{ ...springDrop, delay: 0.3, opacity: { duration: 0.3, delay: 0.3 } }}
       whileHover={{ transform: "translateY(-2px) rotate(0deg)" }}
       onPointerEnter={() => setHovered(true)}
       onPointerLeave={() => {

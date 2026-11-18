@@ -6,8 +6,24 @@ use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize, WebviewUrl, Webv
 /// Etiqueta de la ventana que vive siempre colgada del borde superior.
 pub const LINE_LABEL: &str = "line";
 
-/// Alto de la franja de la línea, en píxeles físicos.
+/// Alto de la franja de la línea, en píxeles LÓGICOS (escala con el DPI).
 pub const LINE_HEIGHT: u32 = 160;
+
+/// Alto físico real de la franja, tal como se aplicó al monitor. Lo usa el
+/// sondeo del reveal para saber si el cursor sigue dentro de la franja con
+/// escalados distintos de 100 %.
+#[derive(Debug, Default)]
+pub struct LineGeometry(pub std::sync::atomic::AtomicU32);
+
+impl LineGeometry {
+    pub fn physical_height(&self) -> u32 {
+        self.0.load(std::sync::atomic::Ordering::Relaxed)
+    }
+
+    fn store(&self, height: u32) {
+        self.0.store(height, std::sync::atomic::Ordering::Relaxed);
+    }
+}
 
 /// Ventanas que se crean bajo demanda y se destruyen al cerrarse.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -96,6 +112,10 @@ pub fn attach_line_to_primary_monitor(app: &AppHandle) -> tauri::Result<()> {
 
     window.set_position(PhysicalPosition::new(origin.x, origin.y))?;
     window.set_size(PhysicalSize::new(size.width, physical_height))?;
+
+    if let Some(geometry) = app.try_state::<LineGeometry>() {
+        geometry.store(physical_height);
+    }
 
     Ok(())
 }

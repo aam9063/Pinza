@@ -70,6 +70,7 @@ pub fn run() {
         .plugin(tauri_plugin_drag::init())
         .manage(Mutex::new(Shelf::default()))
         .manage(Mutex::new(Vec::<ThumbRect>::new()))
+        .manage(windows_mgr::LineGeometry::default())
         .manage(Mutex::new(commands::open_window::EditorTarget::default()))
         .manage(Mutex::new(Settings::default()))
         .manage(RevealControl::default())
@@ -186,7 +187,13 @@ fn spawn_reveal_loop(app: AppHandle) {
             };
             let tick = Tick {
                 cursor_in_edge_zone,
-                cursor_in_strip: cursor_y.is_some_and(|y| y <= windows_mgr::LINE_HEIGHT as i32),
+                cursor_in_strip: cursor_y.is_some_and(|y| {
+                    let strip = app
+                        .state::<windows_mgr::LineGeometry>()
+                        .physical_height()
+                        .max(windows_mgr::LINE_HEIGHT);
+                    y <= strip as i32
+                }),
                 fullscreen,
                 now,
             };
