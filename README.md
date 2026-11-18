@@ -9,7 +9,7 @@
   Bajan solas. Las coges sin buscar nada.
 </p>
 
-![Demo de Pinza](docs\design\pinza-lanzamiento.gif)
+![Demo de Pinza](docs/design/pinza-lanzamiento.gif)
 
 <p align="center">
   <b>Windows 10/11</b> &nbsp;·&nbsp; gratis y de código abierto &nbsp;·&nbsp; sin cuentas, sin red, sin telemetría
