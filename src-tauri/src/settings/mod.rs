@@ -148,6 +148,6 @@ mod tests {
         .unwrap();
         let settings = load(&guard.path);
         assert_eq!(settings.max_thumbnails, 7);
-        assert_eq!(settings.use_recycle_bin, true);
+        assert!(settings.use_recycle_bin);
     }
 }

@@ -13,6 +13,7 @@ mod reveal;
 mod settings;
 mod shelf;
 mod thumbnails;
+mod tray;
 mod watcher;
 mod windows_mgr;
 
@@ -99,6 +100,9 @@ pub fn run() {
             }
             if let Err(error) = commands::settings_cmds::load_into(app.handle()) {
                 log::error!("no se pudieron cargar los ajustes: {error}");
+            }
+            if let Err(error) = tray::create(app.handle()) {
+                log::error!("la bandeja no arrancó: {error}");
             }
             serve_thumbnails_scope(app.handle());
             setup_watcher(app.handle());
