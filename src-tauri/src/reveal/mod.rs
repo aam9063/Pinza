@@ -78,6 +78,18 @@ impl RevealMachine {
         self.state == State::Shown
     }
 
+    /// Despliega la línea al colgarse una captura (como Tendedero). Respeta
+    /// el bloqueo de pantalla completa; si ya está visible, no hace nada.
+    pub fn show(&mut self, fullscreen: bool) -> Action {
+        if self.state == State::Shown || fullscreen {
+            return Action::Nothing;
+        }
+        self.state = State::Shown;
+        self.left_strip_at = None;
+        self.dwell_started = None;
+        Action::Show
+    }
+
     /// Alterna la línea con el atajo global. Mostrar respeta el bloqueo de
     /// pantalla completa; ocultar desarma la zona del borde hasta que el
     /// cursor la abandone.
@@ -160,6 +172,7 @@ impl RevealMachine {
 #[derive(Debug, Default)]
 pub struct RevealControl {
     toggle_requested: AtomicBool,
+    show_requested: AtomicBool,
 }
 
 impl RevealControl {
@@ -169,6 +182,15 @@ impl RevealControl {
 
     pub fn take_toggle(&self) -> bool {
         self.toggle_requested.swap(false, Ordering::Relaxed)
+    }
+
+    /// Pide desplegar la línea (al colgar una captura nueva, como Tendedero).
+    pub fn request_show(&self) {
+        self.show_requested.store(true, Ordering::Relaxed);
+    }
+
+    pub fn take_show(&self) -> bool {
+        self.show_requested.swap(false, Ordering::Relaxed)
     }
 }
 
@@ -281,6 +303,25 @@ mod tests {
         appears.fullscreen = true;
         assert_eq!(machine.tick(appears), Action::Hide);
         assert!(!machine.is_shown());
+    }
+
+    #[test]
+    fn show_request_deploys_the_line_unless_fullscreen_or_already_shown() {
+        let mut machine = RevealMachine::new();
+        let t0 = Instant::now();
+        assert_eq!(machine.show(false), Action::Show);
+        assert!(machine.is_shown());
+        // Ya visible: no-op.
+        assert_eq!(machine.show(false), Action::Nothing);
+        // Ocultar y pedir show con pantalla completa: bloqueado.
+        assert_eq!(machine.toggle(true), Action::Hide);
+        assert_eq!(machine.show(true), Action::Nothing);
+        assert!(!machine.is_shown());
+        // El cursor no tocó el borde: la zona queda armada para el siguiente tick.
+        assert_eq!(
+            machine.tick(tick_at(t0 + Duration::from_millis(100))),
+            Action::Nothing
+        );
     }
 
     #[test]

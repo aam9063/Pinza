@@ -37,11 +37,20 @@ export function ClothesLine() {
   useEffect(() => {
     const publish = () => {
       const scale = window.devicePixelRatio || 1;
+      // Margen de tolerancia (px físicos): con escalados de DPI el cursor
+      // roza el borde del rect y el click-through parpadea, ocultando la
+      // barra de acciones (fallo visto en portátil a 150 %).
+      const margin = 8;
       const rects: ThumbRect[] = [
         ...(navRef.current?.querySelectorAll("[data-testid^='thumbnail-']") ?? []),
       ].map((thumb) => {
         const r = thumb.getBoundingClientRect();
-        return { x: r.x * scale, y: r.y * scale, width: r.width * scale, height: r.height * scale };
+        return {
+          x: (r.x - margin) * scale,
+          y: (r.y - margin) * scale,
+          width: (r.width + margin * 2) * scale,
+          height: (r.height + margin * 2) * scale,
+        };
       });
       void setThumbnailRects(rects).catch((error) =>
         logger.error("no se pudieron publicar los rectángulos de las miniaturas", error),

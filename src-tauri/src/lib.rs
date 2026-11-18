@@ -193,6 +193,8 @@ fn spawn_reveal_loop(app: AppHandle) {
 
             let action = if app.state::<RevealControl>().take_toggle() {
                 machine.toggle(tick.fullscreen)
+            } else if app.state::<RevealControl>().take_show() {
+                machine.show(tick.fullscreen)
             } else {
                 machine.tick(tick)
             };
@@ -379,6 +381,10 @@ pub(crate) fn hang_screenshot(app: &AppHandle, path: PathBuf) {
         log::debug!("la captura {path:?} ya estaba colgada");
         return;
     };
+
+    // Como Tendedero: al capturar, la línea baja sola para que el vuelo de
+    // la miniatura hasta la cuerda sea visible (BRIEF flujo 2).
+    app.state::<RevealControl>().request_show();
 
     if let Err(error) = app.emit(commands::SCREENSHOT_ADDED_EVENT, entry) {
         log::error!("no se pudo avisar de la nueva captura: {error}");

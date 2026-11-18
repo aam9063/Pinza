@@ -107,7 +107,7 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
   return (
     <motion.figure
       data-testid={`thumbnail-${entry.id}`}
-      className="relative mx-2 flex w-40 shrink-0 flex-col items-center origin-top"
+      className="relative mx-2 flex w-40 shrink-0 cursor-pointer flex-col items-center origin-top"
       variants={thumbnailFlying}
       initial="flying"
       animate="hanging"
@@ -140,7 +140,7 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
           <img
             src={assetUrl(entry.thumbnail)}
             alt={entry.fileName}
-            className="h-24 w-40 cursor-pointer select-none object-cover"
+            className="h-24 w-40 select-none object-cover"
             data-testid={`thumb-image-${entry.id}`}
             onClick={onClick}
             onDoubleClick={onDoubleClick}
