@@ -46,3 +46,5 @@
 ## Log
 
 **L1:** «Ya está. Continúa» → M4a mergeado (PR #9, `f4ce881`); luz verde a M4b. Rama `feature/m4b-system` desde `origin/dev`.
+
+**L2:** T1-T5 implementadas y verificadas contra la app real. Evidencia: cambiar el atajo por IPC a `ctrl+shift+l` re-registra al vuelo (el viejo Ctrl+Alt+T deja de alternar; el nuevo despliega — verificado con teclado real); el atajo guardado se registra desde los ajustes al arrancar; autostart registrado en la clave Run del registro de Windows y aplicado al cambiar el ajuste; segunda instancia de pinza.exe no crea proceso nuevo (1 antes, 1 después) y enfoca la línea; textos de la bandeja centralizados en `i18n.rs` (2 tests). El grabador de teclas de la ventana settings captura la combinación y la guarda en el formato del plugin. Checks: `cargo test` 51/51 (2 de i18n), `pnpm test` 45/45, clippy limpio, typecheck/lint/arch verdes. Commits: fd61083→61f54ee (T1-T4), fef5bb6 (grabador web). Pendiente: push, revisión RDD y PR.
