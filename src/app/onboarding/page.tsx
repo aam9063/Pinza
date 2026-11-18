@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FolderOpen, Keyboard, Monitor, Check } from "lucide-react";
 
 import {
+  closeWindow,
   getSettings,
   knownScreenshotsFolder,
   restartWatching,
@@ -91,7 +92,7 @@ export default function OnboardingWindow() {
       apply({ watchDir: folder });
       try {
         await restartWatching(folder);
-        window.close();
+        await closeWindow();
       } catch (error) {
         logger.error("la vigilancia no pudo arrancar sobre la carpeta elegida", error);
       }
