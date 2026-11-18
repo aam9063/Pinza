@@ -188,7 +188,7 @@ export function HangingThumbnail({ entry, isNew }: { entry: ShelfEntry; isNew: b
       )}
       {hovered && (
         <div
-          className="absolute bottom-6 flex gap-1 rounded-full bg-white/95 px-2 py-1 shadow-md"
+          className="absolute bottom-6 flex gap-1 rounded-full bg-surface-raised/95 px-2 py-1 shadow-md"
           data-testid={`thumb-actions-${entry.id}`}
         >
           <ActionButton label="Copiar" testId="thumb-action-copy" onClick={onClick}>

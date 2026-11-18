@@ -103,7 +103,7 @@ export default function SettingsWindow() {
                   value={settings.watchDir}
                   placeholder="Imágenes\Capturas de pantalla"
                   data-testid="settings-watch-dir"
-                  className="w-80 rounded border border-ink/20 bg-white px-2 py-1 text-sm text-ink"
+                  className="w-80 rounded border border-ink/20 bg-surface-raised px-2 py-1 text-sm text-ink"
                   onChange={(event) => apply({ watchDir: event.target.value })}
                 />
               </Field>
@@ -183,7 +183,7 @@ export default function SettingsWindow() {
                     readOnly
                     value={recording ? "Grabando…" : settings.shortcut}
                     data-testid="settings-shortcut"
-                    className="w-56 rounded border border-ink/20 bg-white px-2 py-1 text-sm text-ink"
+                    className="w-56 rounded border border-ink/20 bg-surface-raised px-2 py-1 text-sm text-ink"
                   />
                   <button
                     type="button"

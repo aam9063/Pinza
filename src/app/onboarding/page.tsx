@@ -128,7 +128,7 @@ export default function OnboardingWindow() {
                 value={settings?.watchDir ?? suggestedFolder}
                 placeholder={suggestedFolder}
                 data-testid="onboarding-folder-input"
-                className="w-full rounded border border-ink/20 bg-white px-2 py-1.5 text-sm text-ink"
+                className="w-full rounded border border-ink/20 bg-surface-raised px-2 py-1.5 text-sm text-ink"
                 onChange={(event) => apply({ watchDir: event.target.value })}
               />
               <p className="text-xs text-ink-muted" data-testid="onboarding-snipping-warning">
@@ -149,7 +149,7 @@ export default function OnboardingWindow() {
                   readOnly
                   value={recording ? "Grabando…" : (settings?.shortcut ?? "")}
                   data-testid="onboarding-shortcut-display"
-                  className="w-56 rounded border border-ink/20 bg-white px-2 py-1.5 text-sm text-ink"
+                  className="w-56 rounded border border-ink/20 bg-surface-raised px-2 py-1.5 text-sm text-ink"
                 />
                 <button
                   type="button"
