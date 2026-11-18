@@ -1,129 +1,184 @@
 # Pinza
 
-Cada captura de pantalla nueva, colgada en una línea en el borde superior de Windows.
+<img src="src-tauri/icons/128x128@2x.png" width="112" align="right" alt="Pinza">
 
-Pinza es una app de escritorio para **Windows 10/11** que vive en la bandeja del sistema
-y en una franja transparente sobre el escritorio. Cuando aparece una captura nueva en tu
-carpeta de capturas, la cuelga de la línea con una pinza: desde ahí la copias, la anotas,
-la abres, la arrastras a otra aplicación o la tiras a la papelera, sin abrir el Explorador.
+**Cada captura de pantalla nueva, colgada en una cuerda en el borde superior de Windows.**
 
-- **No sustituye a la herramienta de captura de Windows.** Win + Impr Pant y el Recortes
-  siguen funcionando como siempre; Pinza vigila la carpeta y reacciona.
-- **Todo local.** Sin cuentas, sin red, sin analítica: la aplicación no hace ni una petición.
-- **El original nunca se toca.** Anotar escribe una copia `_anotada.png` junto al original.
+Pinza vigila tu carpeta de capturas. En cuanto aparece una nueva, la cuerda baja sola y la
+captura se tiende en ella con su pinza de madera. Desde ahí la copias, la anotas, la abres,
+la arrastras a otra aplicación o la tiras a la papelera: sin abrir el Explorador ni buscar
+nada en el escritorio.
 
-Las pantallas de referencia del diseño están en [`docs/design/`](docs/design/) y el detalle
-de los flujos, el stack y los hitos en [`BRIEF.md`](BRIEF.md).
+Windows 10/11 · Gratis y de código abierto · Sin cuentas, sin red, sin telemetría
 
-## Estado
+<br>
 
-Hito **M0 (andamiaje)** en curso. La parte web está verde y verificada sobre el export
-estático; el shell nativo está escrito pero **todavía no compilado ni ejecutado**, porque la
-máquina de desarrollo actual no tiene toolchain de Rust.
+<p align="center">
+  <a href="https://github.com/aam9063/Pinza/releases/latest"><b>Descargar para Windows ›</b></a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#compilar-desde-el-código">Compilar desde el código</a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#créditos">Créditos</a>
+</p>
 
-| Hito | Contenido                                                                    | Estado    |
-| ---- | ---------------------------------------------------------------------------- | --------- |
-| M0   | Andamiaje: export estático, comprobaciones estáticas, ventanas, verificación | En curso  |
-| M1   | Vigilante de carpeta y línea con animación de colgar y descolgar             | Pendiente |
-| M2   | Gestos: copiar, abrir, arrastrar fuera, papelera, mantener pulsado           | Pendiente |
-| M3   | Editor de anotaciones completo                                               | Pendiente |
-| M4   | Bandeja, ajustes persistentes, autostart, pantalla completa, idiomas         | Pendiente |
-| M5   | Asistente de primer arranque                                                 | Pendiente |
-| M6   | Instalador NSIS/MSI e icono definitivo                                       | Pendiente |
+---
 
-## Stack
+## Descarga
 
-| Capa               | Tecnología                                                                         |
-| ------------------ | ---------------------------------------------------------------------------------- |
-| Shell nativo       | Tauri 2 + Rust estable                                                             |
-| UI                 | Next.js 16.4 (App Router) como exportación estática, React 19, TypeScript estricto |
-| Estilos            | Tailwind CSS v4, con los tokens de diseño en el `@theme`                           |
-| Animación          | Motion (`motion/react`), siempre `transform` y `opacity`                           |
-| Editor             | Konva + react-konva, perfect-freehand                                              |
-| Estado de UI       | Zustand (un store por ventana); la verdad vive en Rust                             |
-| Iconos             | lucide-react                                                                       |
-| Gestor de paquetes | pnpm                                                                               |
+Coge el instalador de la [última release](https://github.com/aam9063/Pinza/releases/latest):
 
-Versiones concretas: `package.json` y `pnpm-lock.yaml`.
+```
+Pinza_0.1.0_x64-setup.exe
+```
 
-## Requisitos
+Abre el fichero y sigue el asistente. Windows SmartScreen avisará de que el editor no está
+verificado: es esperado, la firma de código queda fuera de esta versión. Pulsa **Más
+información → Ejecutar de todas formas**.
 
-- Windows 10/11 con WebView2 (viene con el sistema en Windows 11).
-- Node.js 22 o superior y pnpm 11.
-- Rust estable con `rustup` (solo para compilar el shell nativo).
+Instala por usuario, sin permisos de administrador, y no necesita nada más: el runtime de
+WebView2 viene con Windows 10/11 actualizado.
 
-## Puesta en marcha
+<details>
+<summary>Si prefieres compilarlo tú</summary>
+<br>
 
-```bash
+Necesitas [Node.js](https://nodejs.org) 20 o superior, [pnpm](https://pnpm.io) 11 y el
+toolchain estable de Rust con las Build Tools de Visual Studio para C++.
+
+```sh
+git clone https://github.com/aam9063/Pinza.git
+cd Pinza
 pnpm install
-pnpm dev:debug      # WebView2 con CDP en el 9222 y carpetas temporales propias
+pnpm tauri build
 ```
 
-`pnpm dev:debug` levanta la app con `--remote-debugging-port=9222` y apunta los ajustes y la
-carpeta vigilada a directorios temporales: nunca toca tus capturas reales.
+El instalador aparece en `src-tauri/target/release/bundle/nsis/`. Para desarrollo con
+inspección del WebView:
 
-## Comandos
-
-| Comando                                   | Qué hace                                                       |
-| ----------------------------------------- | -------------------------------------------------------------- |
-| `pnpm dev`                                | Solo la web (Next.js en modo desarrollo)                       |
-| `pnpm dev:debug`                          | La app completa, con CDP abierto y carpetas temporales         |
-| `pnpm verify`                             | `typecheck` + `lint` + `arch` + `test` + `build:web`           |
-| `pnpm typecheck`                          | TypeScript en modo estricto, sin emitir                        |
-| `pnpm lint`                               | ESLint plano con las restricciones del proyecto                |
-| `pnpm arch`                               | dependency-cruiser: fronteras entre carpetas y APIs prohibidas |
-| `pnpm test`                               | Vitest + Testing Library                                       |
-| `pnpm build:web`                          | Export estático en `out/`                                      |
-| `pnpm e2e`                                | Playwright contra la app real por CDP                          |
-| `pnpm verify:export`                      | Sirve `out/` y carga las cuatro rutas en un navegador real     |
-| `pnpm verify:shot [ventana]`              | Captura una ventana (o las cuatro)                             |
-| `pnpm verify:desktop-shot`                | Captura el escritorio completo                                 |
-| `pnpm verify:logs [segundos]`             | Consola del WebView2 de cada ventana                           |
-| `pnpm verify:network`                     | Falla ante cualquier petición de red                           |
-| `pnpm verify:trace <ventana> <escenario>` | Traza de una animación y tareas de más de 16 ms                |
-| `pnpm verify:heap [ventana]`              | Foto del heap para vigilar la memoria                          |
-| `pnpm verify:ipc`                         | Humo de los comandos tipados                                   |
-| `pnpm seed:screenshots`                   | Copia capturas de prueba en la carpeta vigilada temporal       |
-| `pnpm verify:native`                      | Comprobaciones que necesitan escritorio interactivo            |
-
-## Estructura
-
-```
-src/                 # Next.js: una ruta por ventana
-  app/{line,editor,settings,onboarding}/
-  shared/{ipc,motion,ui,log}/    # capa única de Tauri, presets, componentes base
-src-tauri/src/       # Rust: comandos, ventanas y (más adelante) vigilante y shelf
-scripts/verify/      # utilidades de verificación
-e2e/                 # Playwright por CDP y capturas de prueba
-docs/                # diseño de referencia y mapa de features
-odd/tasks/           # documentos de feature del flujo de trabajo
+```sh
+pnpm dev:debug
 ```
 
-La web solo pinta y emite intenciones: todas las llamadas a Tauri pasan por
-`src/shared/ipc/`, y ninguna otra carpeta importa `@tauri-apps/*`.
+</details>
 
-## Cómo se verifica
+<br>
 
-Nada se da por bueno por leer el código. Cada ventana es un WebView2, así que se opera por
-Chrome DevTools Protocol como lo haría una persona: se capturan pantallas, se leen trazas, se
-comprueba que no hay peticiones de red y se mide la memoria. El detalle está en
-[`AGENTS.md`](AGENTS.md), sección 2.
+## Lo que hace
 
-## Cómo se trabaja
+| Cuándo | Qué pasa |
+|:--|:--|
+| Tomas una captura | La cuerda baja sola y la captura se tiende en ella, la más nueva a la izquierda |
+| Pasas el ratón por encima | Se endereza, sube dos píxeles y aparece su barra de acciones |
+| Clic | La copia al portapapeles y te lo confirma con una pastilla «Copiada» |
+| Mantienes 0,4 s | Abre el editor de anotaciones con la captura cargada |
+| Doble clic | La abre con el visor predeterminado de Windows |
+| La arrastras | Arrastre nativo del fichero original a una carpeta, a un chat, a un correo o a un documento |
+| La tiras a la papelera | Va a la Papelera de reciclaje (o se borra, si lo cambias en Ajustes) y se descuelga de la cuerda |
+| Pasas de diez | La más antigua se descuelga; el fichero **nunca** se borra por esto |
 
-- **ODD** (Organic Driven Development): cada hito se abre como documento de feature en
-  `odd/tasks/`, con specs citadas, tareas y evidencias.
-- **TDD**: se observa el rojo antes de arreglarlo, en Vitest y en `cargo test`.
-- **RDD**: revisión nativa sobre el cambio congelado en cada PR.
-- Ramas `main` → `dev` → `feature/<nombre>`; las PR van contra `dev`.
+Fuera de la cuerda, la ventana deja pasar el ratón a lo que haya debajo: los clics solo
+llegan a Pinza cuando el puntero está sobre una miniatura.
 
-## Idioma
+<br>
 
-La documentación, los mensajes de commit y los textos de la interfaz están en castellano de
-España; el código (identificadores, tipos, nombres de fichero) en inglés.
+## La cuerda
+
+- **Baja cuando la rozas.** Poner el puntero en el borde superior de la pantalla durante un
+  instante la despliega; al retirarlo se vuelve a esconder.
+- **Atajo global.** <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>T</kbd> la muestra u oculta desde
+  cualquier aplicación. Se puede cambiar en Ajustes grabando otra combinación.
+- **Nunca interrumpe.** Con un juego, un vídeo o una presentación a pantalla completa se
+  queda escondida.
+- **Vive en la bandeja.** Desde su icono abres la carpeta de capturas, pausas la vigilancia,
+  entras en Ajustes o sales.
+
+<br>
+
+## El editor de anotaciones
+
+Lápiz y resaltador de trazo natural, flecha, línea, rectángulo, elipse, texto y pasos
+numerados que se autoincrementan. Cada anotación es un objeto: la mueves, la redimensionas,
+le cambias el color o el grosor después de dibujarla, la duplicas con <kbd>Ctrl</kbd> +
+<kbd>D</kbd> y la borras con <kbd>Supr</kbd>. Deshacer y rehacer sin límite durante la sesión.
+
+Arriba tienes zoom con <kbd>Ctrl</kbd> + rueda y desplazamiento con espacio y arrastre.
+Para ocultar datos sensibles están el pixelado y el difuminado, y para quedarte solo con una
+zona, el recorte.
+
+**Guardar y cerrar** escribe `captura_<fecha>_<hora>_anotada.png` junto al original y la
+cuelga como captura nueva. El original no se toca nunca. El resultado se exporta a la
+resolución real de la captura, no a la de tu pantalla.
+
+<br>
+
+## Privacidad
+
+- **Sin red.** Pinza no hace ni una petición: ni cuentas, ni analítica, ni comprobación de
+  actualizaciones.
+- **Todo en tu equipo.** La lista de capturas, los ajustes y las miniaturas viven en tu
+  carpeta de usuario.
+- **Tus ficheros son tuyos.** El original nunca se modifica, y descolgar una captura de la
+  cuerda jamás la borra del disco.
+
+<br>
+
+## Ajustes
+
+Carpeta vigilada, Papelera de reciclaje o borrado definitivo, modo de despliegue (borde,
+atajo o ambos), cuántas miniaturas cuelgan, ocultar en pantalla completa, atajo global e
+iniciar con Windows. Todo se guarda al instante y sobrevive a los reinicios.
+
+<br>
+
+## Lo que viene
+
+Este es el punto de partida, no el final:
+
+- **Más idiomas.** La interfaz está en castellano; llegarán traducciones.
+- **Corrección de fallos.** Los que vayáis encontrando se irán arreglando en cada release.
+- **Detalles pendientes.** La animación de la captura viajando hasta la cuerda está a medio
+  camino y volverá más afinada.
+
+Si algo va mal, abre un issue con la versión de Windows, la de Pinza y los pasos para
+reproducirlo. Se agradece mucho.
+
+<br>
+
+## Cómo está hecho
+
+| Capa | Tecnología |
+|:--|:--|
+| Shell nativo | Tauri 2 sobre Rust estable: vigilante de ficheros, miniaturas, portapapeles, papelera, arrastre nativo y llamadas a Win32 |
+| Interfaz | Next.js 16 como exportación estática, React 19 y TypeScript estricto |
+| Estilos | Tailwind CSS v4 con los tokens del tema claro y oscuro |
+| Animación | Motion, solo `transform` y `opacity` |
+| Lienzo | Konva con perfect-freehand para los trazos |
+| Pruebas | Vitest y Testing Library, `cargo test`, Playwright sobre CDP y comprobaciones estáticas (ESLint, clippy, dependency-cruiser) |
+
+```
+src/features/        cada pantalla con su lógica (line, annotate)
+src/shared/          IPC tipada, motion, i18n y componentes
+src-tauri/src/       watcher, shelf, thumbnails, reveal, settings, tray
+```
+
+El detalle de los flujos, el reparto entre Rust y la web y los hitos está en
+[`BRIEF.md`](BRIEF.md); el mapa de features, en [`docs/feature-map.md`](docs/feature-map.md).
+
+<br>
+
+## Créditos
+
+Pinza nace de una idea que no es mía: **[Tendedero](https://github.com/alejandrobujan/tendedero)**,
+la app de macOS de **[Alejandro Buján](https://alejandrobujan.com)** ([@alejandr0bujan](https://x.com/alejandr0bujan))
+que cuelga tus capturas en una cuerda bajo la barra de menús. Es una reinterpretación
+cuidadosa para Windows, con otro stack y código propio de cero: no se ha copiado ni portado
+su código, su nombre ni su icono.
+
+Si usas Mac, pruébala: es su idea, y está muy bien hecha.
+
+<br>
 
 ## Licencia
 
-Pendiente de decisión. Si el repositorio es público, será MIT. El nombre y el icono de
-[Tendedero](https://github.com/alejandrobujan/tendedero), la app de macOS que inspira este
-proyecto, quedan fuera de esa licencia: Pinza tiene identidad propia y no reutiliza su código.
+[MIT](LICENSE): úsalo, modifícalo, aprópiate de él y compártelo. El nombre Pinza y su icono
+quedan fuera de la licencia, así que un fork necesita los suyos.
