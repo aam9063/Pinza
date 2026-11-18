@@ -40,16 +40,18 @@ export function ClothesLine() {
       // Margen de tolerancia (px físicos): con escalados de DPI el cursor
       // roza el borde del rect y el click-through parpadea, ocultando la
       // barra de acciones (fallo visto en portátil a 150 %).
+      // El margen es de 8 px FÍSICOS: se suma después de escalar, para no
+      // crecer con el DPI (antes 8 lógicos = 12 físicos al 150 %).
       const margin = 8;
       const rects: ThumbRect[] = [
         ...(navRef.current?.querySelectorAll("[data-testid^='thumbnail-']") ?? []),
       ].map((thumb) => {
         const r = thumb.getBoundingClientRect();
         return {
-          x: (r.x - margin) * scale,
-          y: (r.y - margin) * scale,
-          width: (r.width + margin * 2) * scale,
-          height: (r.height + margin * 2) * scale,
+          x: r.x * scale - margin,
+          y: r.y * scale - margin,
+          width: r.width * scale + margin * 2,
+          height: r.height * scale + margin * 2,
         };
       });
       void setThumbnailRects(rects).catch((error) =>
