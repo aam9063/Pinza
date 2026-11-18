@@ -46,9 +46,35 @@ pub fn set_settings(
 ) -> Result<(), String> {
     let dir = data_dir(&app)?;
     settings::save(&dir, &settings)?;
+    let previous_limit = state
+        .lock()
+        .map(|current| current.max_thumbnails)
+        .map_err(|_| "los ajustes están envenenados".to_string())?;
     *state
         .lock()
         .map_err(|_| "los ajustes están envenenados".to_string())? = settings.clone();
+
+    // El tope nuevo re-aplica la cola al vuelo: las descolgadas emiten su
+    // evento y sus ficheros nunca se borran (BRIEF flujo 3).
+    if settings.max_thumbnails != previous_limit {
+        use crate::shelf::{Shelf, ShelfEntry};
+        use tauri::Manager;
+        let evicted: Vec<ShelfEntry> = app
+            .state::<std::sync::Mutex<Shelf>>()
+            .lock()
+            .map(|mut shelf| shelf.set_max_entries(settings.max_thumbnails))
+            .unwrap_or_default();
+        for entry in evicted {
+            if let Err(error) = app.emit(crate::commands::SCREENSHOT_REMOVED_EVENT, &entry) {
+                log::error!("no se pudo avisar de la captura descolgada: {error}");
+            }
+            log::info!(
+                "el nuevo tope descolgó {} (su fichero no se toca)",
+                entry.file_name()
+            );
+        }
+    }
+
     use tauri::Emitter;
     app.emit(super::SETTINGS_CHANGED_EVENT, &settings)
         .map_err(|error| format!("no se pudo avisar del cambio de ajustes: {error}"))?;

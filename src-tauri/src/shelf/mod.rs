@@ -126,6 +126,20 @@ impl Shelf {
         }
     }
 
+    /// Cambia el tope al vuelo (ajustes); si baja, las más antiguas se
+    /// descolgan de inmediato y se devuelven; sus ficheros nunca se borran.
+    pub fn set_max_entries(&mut self, max_entries: usize) -> Vec<ShelfEntry> {
+        self.max_entries = max_entries.max(1);
+        let mut evicted = Vec::new();
+        while self.entries.len() > self.max_entries {
+            match self.entries.pop_front() {
+                Some(entry) => evicted.push(entry),
+                None => break,
+            }
+        }
+        evicted
+    }
+
     /// Cuelga una captura al final de la línea. Si el tope se supera, la más
     /// antigua se descolga y se devuelve; su fichero nunca se borra.
     pub fn hang(&mut self, entry: ShelfEntry) -> HangOutcome {
@@ -258,6 +272,23 @@ mod tests {
 
         assert_eq!(outcome, HangOutcome::AlreadyHung);
         assert_eq!(shelf.len(), 1);
+    }
+
+    #[test]
+    fn lowering_the_limit_evicts_the_oldest_in_order() {
+        let mut shelf = Shelf::new(3);
+        for index in 0..3 {
+            let _ = shelf.hang(ShelfEntry::new(
+                Path::new("/capturas").join(format!("{index}.png")),
+                0,
+            ));
+        }
+        let evicted = shelf.set_max_entries(1);
+        assert_eq!(evicted.len(), 2);
+        assert_eq!(evicted[0].file_name(), "0.png");
+        assert_eq!(evicted[1].file_name(), "1.png");
+        assert_eq!(shelf.len(), 1);
+        assert_eq!(shelf.entries()[0].file_name(), "2.png");
     }
 
     #[test]
