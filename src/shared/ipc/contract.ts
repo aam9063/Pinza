@@ -26,6 +26,9 @@ export interface Settings {
   readonly revealMode: RevealMode;
   readonly maxThumbnails: number;
   readonly hideOnFullscreen: boolean;
+  /** Global accelerator (tauri format, e.g. "ctrl+alt+t"). */
+  readonly shortcut: string;
+  readonly startWithWindows: boolean;
 }
 
 export interface SettingsPayload extends Settings {
