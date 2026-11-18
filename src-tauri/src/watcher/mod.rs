@@ -67,6 +67,11 @@ impl WatcherHandle {
         self.paused.store(false, Ordering::Relaxed);
     }
 
+    /// ¿Está este vigilante pausado?
+    pub fn is_paused(&self) -> bool {
+        self.paused.load(Ordering::Relaxed)
+    }
+
     /// Apaga el vigilante y espera a que su hilo termine.
     pub fn stop(mut self) {
         self.stopped.store(true, Ordering::Relaxed);
@@ -87,6 +92,14 @@ impl WatchControl {
         match self.0.lock() {
             Ok(mut guard) => guard.replace(handle),
             Err(_) => None,
+        }
+    }
+
+    /// ¿Está pausado el vigilante? `false` si aún no arrancó.
+    pub fn is_paused(&self) -> bool {
+        match self.0.lock() {
+            Ok(guard) => guard.as_ref().is_some_and(WatcherHandle::is_paused),
+            Err(_) => false,
         }
     }
 

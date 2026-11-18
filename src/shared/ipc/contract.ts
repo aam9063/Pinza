@@ -17,6 +17,21 @@ export interface ThumbRect {
   readonly height: number;
 }
 
+/** Persistent settings owned by Rust (BRIEF flow 5). */
+export type RevealMode = "edge" | "shortcut" | "both";
+
+export interface Settings {
+  readonly watchDir: string;
+  readonly useRecycleBin: boolean;
+  readonly revealMode: RevealMode;
+  readonly maxThumbnails: number;
+  readonly hideOnFullscreen: boolean;
+}
+
+export interface SettingsPayload extends Settings {
+  readonly dataDir: string;
+}
+
 /** The file an operation acted on, so the web can show feedback. */
 export interface FileOutcome {
   readonly path: string;
@@ -53,6 +68,8 @@ export interface CommandMap {
     readonly args: { readonly original: string; readonly annotatedPng: number[] };
     readonly result: FileOutcome;
   };
+  readonly get_settings: { readonly args: Record<string, never>; readonly result: SettingsPayload };
+  readonly set_settings: { readonly args: { readonly settings: Settings }; readonly result: null };
   readonly trash_file: { readonly args: { readonly path: string }; readonly result: FileOutcome };
   readonly resume_watching: { readonly args: Record<string, never>; readonly result: null };
 }
@@ -61,5 +78,6 @@ export interface CommandMap {
 export const SCREENSHOT_ADDED_EVENT = "screenshot:added";
 export const SCREENSHOT_REMOVED_EVENT = "screenshot:removed";
 /** The line reveals itself (edge dwell or global shortcut) and hides again. */
+export const SETTINGS_CHANGED_EVENT = "settings:changed";
 export const LINE_SHOW_EVENT = "line:show";
 export const LINE_HIDE_EVENT = "line:hide";

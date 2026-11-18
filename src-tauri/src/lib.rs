@@ -10,8 +10,10 @@
 mod commands;
 mod platform;
 mod reveal;
+mod settings;
 mod shelf;
 mod thumbnails;
+mod tray;
 mod watcher;
 mod windows_mgr;
 
@@ -23,6 +25,7 @@ use commands::line::ThumbRect;
 use commands::LINE_HIDE_EVENT;
 use commands::LINE_SHOW_EVENT;
 use reveal::{Action, RevealControl, RevealMachine, Tick};
+use settings::Settings;
 use shelf::{HangOutcome, Shelf, ShelfEntry};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{Builder as ShortcutBuilder, GlobalShortcutExt, ShortcutState};
@@ -34,7 +37,7 @@ const DATA_DIR_ENV: &str = "PINZA_DATA_DIR";
 /// Carpeta de datos de Pinza: la que fija `PINZA_DATA_DIR` (verificación y
 /// desarrollo) o la estándar de la app. Solo la carpeta de miniaturas se
 /// sirve por el protocolo de assets, nunca las capturas originales.
-fn resolve_data_dir(app: &AppHandle) -> Result<PathBuf, String> {
+pub(crate) fn resolve_data_dir(app: &AppHandle) -> Result<PathBuf, String> {
     if let Ok(data_dir) = std::env::var(DATA_DIR_ENV) {
         if !data_dir.trim().is_empty() {
             return Ok(PathBuf::from(data_dir));
@@ -55,6 +58,7 @@ pub fn run() {
         .manage(Mutex::new(Shelf::default()))
         .manage(Mutex::new(Vec::<ThumbRect>::new()))
         .manage(Mutex::new(commands::open_window::EditorTarget::default()))
+        .manage(Mutex::new(Settings::default()))
         .manage(RevealControl::default())
         .manage(WatchControl::default())
         .invoke_handler(tauri::generate_handler![
@@ -70,6 +74,8 @@ pub fn run() {
             commands::file_ops::open_file,
             commands::file_ops::trash_file,
             commands::file_ops::save_annotated,
+            commands::settings_cmds::get_settings,
+            commands::settings_cmds::set_settings,
         ])
         .setup(|app| {
             windows_mgr::attach_line_to_primary_monitor(app.handle())?;
@@ -91,6 +97,12 @@ pub fn run() {
                     })
             {
                 log::error!("el atajo global Ctrl+Alt+T no se pudo registrar: {error}");
+            }
+            if let Err(error) = commands::settings_cmds::load_into(app.handle()) {
+                log::error!("no se pudieron cargar los ajustes: {error}");
+            }
+            if let Err(error) = tray::create(app.handle()) {
+                log::error!("la bandeja no arrancó: {error}");
             }
             serve_thumbnails_scope(app.handle());
             setup_watcher(app.handle());
