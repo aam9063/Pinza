@@ -9,6 +9,8 @@
   Bajan solas. Las coges sin buscar nada.
 </p>
 
+![Demo de Pinza](docs\design\pinza-lanzamiento.gif)
+
 <p align="center">
   <b>Windows 10/11</b> &nbsp;·&nbsp; gratis y de código abierto &nbsp;·&nbsp; sin cuentas, sin red, sin telemetría
 </p>
@@ -26,6 +28,18 @@
 </p>
 
 ---
+
+## Gracias a quien tuvo la idea
+
+Pinza es una reinterpretación para Windows de **[Tendedero](https://github.com/alejandrobujan/tendedero)**,
+la aplicación de macOS de **[Alejandro Buján](https://alejandrobujan.com)**
+([@alejandr0bujan](https://x.com/alejandr0bujan)) que cuelga las capturas de una cuerda bajo
+la barra de menús. La idea es suya y está muy bien llevada; si tienes un Mac, pruébala.
+
+Aquí está hecha desde cero, con otro stack y código propio: no se ha portado ni copiado
+nada de Tendedero, ni su nombre, ni su icono.
+
+<br>
 
 ## Cómo va
 
@@ -138,19 +152,8 @@ Si algo se rompe, abre un issue con tu versión de Windows, la de Pinza y cómo 
 
 <br>
 
-## Gracias a quien tuvo la idea
 
-Pinza es una reinterpretación para Windows de **[Tendedero](https://github.com/alejandrobujan/tendedero)**,
-la aplicación de macOS de **[Alejandro Buján](https://alejandrobujan.com)**
-([@alejandr0bujan](https://x.com/alejandr0bujan)) que cuelga las capturas de una cuerda bajo
-la barra de menús. La idea es suya y está muy bien llevada; si tienes un Mac, pruébala.
-
-Aquí está hecha desde cero, con otro stack y código propio: no se ha portado ni copiado
-nada de Tendedero, ni su nombre, ni su icono.
-
-<br>
 
 ## Licencia
 
-MIT. Haz lo que quieras con el código: usarlo, cambiarlo, publicarlo. El nombre **Pinza** y
-su icono no entran en la licencia, así que un fork necesita los suyos.
+MIT License
