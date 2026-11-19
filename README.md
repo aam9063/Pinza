@@ -1,3 +1,10 @@
+<a href="https://nan.builders/?ref=built-with-nan">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="https://nan.builders/badge/built-with-nan-light.svg">
+    <img width="266" src="https://nan.builders/badge/built-with-nan-dark.svg" alt="Built with NaN">
+  </picture>
+</a>
+
 <p align="center">
   <img src="src-tauri/icons/128x128@2x.png" width="120" alt="Pinza">
 </p>
